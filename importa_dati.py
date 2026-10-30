@@ -52,8 +52,30 @@ DENOMINAZIONI_ACCENTI = {
 # Nomi di via corrotti nello stradario di origine: nome sbagliato -> nome giusto. Se il nome
 # giusto c'e' gia' (stessa via nello stesso quartiere), le due voci si fondono.
 CORREZIONI_NOMI = {
-    "Largo Fratelli Lumiãˆre": "Largo Fratelli Lumiere",
+    "Largo Fratelli Lumiãˆre": "Largo Fratelli Lumière",
+    "Largo Fratelli Lumiere": "Largo Fratelli Lumière",
     "Via Promãˆteo": "Via Prometeo",
+    # Il passaggio a monte che toglie il suffisso del municipio dal nome toglie anche le
+    # cifre finali che fanno parte del nome: nomi completi dallo stradario GeoRoma.
+    "Via Ragazzi del '": "Via Ragazzi del '99",
+    "Viadotto Giubileo del": "Viadotto Giubileo del 2000",
+    "Piazzale dei Ragazzi del": "Piazzale dei Ragazzi del 1849",
+    "Largo Tre Giugno": "Largo Tre Giugno 1849",
+    "Piazzale Dodici Ottobre": "Piazzale Dodici Ottobre 1492",
+    "Piazzale Venticinque Marzo": "Piazzale Venticinque Marzo 1957",
+    "Parco Venticinque Novembre": "Parco Venticinque Novembre 1884",
+    "Via Colle Aurelio": "Via Colle Aurelio 1100",
+    "Piazza del Parco Caduti del 19 Luglio": "Piazza del Parco Caduti del 19 Luglio 1943",
+    # Numerale romano finale reso minuscolo dalla conversione in maiuscole/minuscole.
+    "Piazza Umberto i": "Piazza Umberto I",
+    "Piazza di Ponte Umberto i": "Piazza di Ponte Umberto I",
+    "Piazzale Napoleone i": "Piazzale Napoleone I",
+    "Ponte Umberto i": "Ponte Umberto I",
+    "Via Adriano i": "Via Adriano I",
+    "Via Carlo Emanuele i": "Via Carlo Emanuele I",
+    "Via Pandolfo i": "Via Pandolfo I",
+    "Via Pelagio i": "Via Pelagio I",
+    "Via Sergio i": "Via Sergio I",
 }
 
 
