@@ -1,0 +1,28 @@
+# Materiali di terzi
+
+La licenza MIT di questo repository (`LICENSE`) copre solo il codice. Dati, librerie, font e marchi qui sotto seguono le condizioni dei rispettivi titolari.
+
+## Dati
+
+| Dato | Dove | Fonte | Condizioni |
+|---|---|---|---|
+| Aree della deliberazione n. 150/2026 (quartieri, rioni, zone funzionali), municipi, stradario, Piano dei Servizi, servizi educativi, numeri civici | `data/` | Roma Capitale, geoportale GeoRoma (`geoportale.comune.roma.it`) | Dati aperti ai sensi dell'art. 52, comma 2, del Codice dell'amministrazione digitale (d.lgs. 82/2005), con fonte Roma Capitale. La licenza CC BY 4.0 vale solo per gli strati che la dichiarano espressamente. Per gli altri non c'è una licenza dichiarata sul geoportale |
+| Rete pedonale dei 15 minuti e posizione di alcuni pronto soccorso | `data/rete/` (non nel repository), `data/servizi-15-minuti.json`, `data/servizi/servizi.json` | OpenStreetMap | Open Database License (ODbL) 1.0, © OpenStreetMap contributors. Dati derivati: vanno mantenuti con la stessa licenza e la stessa attribuzione |
+| Anagrafe delle scuole statali e paritarie (a.s. 2026/27) | `data/scuole.json`, `data/scuole-dettagli.json`, `data/servizi/servizi.json` | Ministero dell'Istruzione e del Merito, dati aperti | Italian Open Data License 2.0 (IODL 2.0), con indicazione della fonte |
+| Case della Comunità | `data/servizi-15-minuti.json`, `data/servizi/servizi.json` | AGENAS | Dati pubblicati dall'ente. Nessuna licenza dichiarata: si indica la fonte |
+| Pronto soccorso | `data/servizi-15-minuti.json`, `data/servizi/servizi.json` | Regione Lazio, con posizioni da OpenStreetMap (ODbL) | Dati pubblicati dall'ente. Nessuna licenza dichiarata per la parte regionale: si indica la fonte |
+| Mappa di base | caricata dal browser | OpenStreetMap, `tile.openstreetmap.org` | © OpenStreetMap contributors (ODbL), con la policy d'uso delle tile di OpenStreetMap Foundation |
+
+## Librerie e font
+
+| Componente | Dove | Licenza |
+|---|---|---|
+| Leaflet | `vendor/leaflet.js`, `vendor/leaflet.css`, licenza in `vendor/leaflet/LICENSE` | BSD 2-Clause |
+| MapLibre GL JS 4.7.1 | `vendor/maplibre-gl/`, licenza in `vendor/maplibre-gl/LICENSE.txt` | BSD 3-Clause |
+| Montserrat | `vendor/fonts/montserrat-latin.woff2`, licenza in `vendor/fonts/OFL.txt` | SIL Open Font License 1.1 |
+
+## Marchi
+
+Il nome e il logo di Urbe Hub (`brand/urbe-hub-donor.png`) sono esclusi dalla licenza MIT. Si possono usare per citare il progetto, non per altri scopi senza permesso.
+
+Il progetto non usa il marchio, lo stemma o il logo di Roma Capitale e non è un servizio di Roma Capitale.

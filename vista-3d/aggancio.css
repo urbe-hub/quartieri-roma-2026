@@ -1,0 +1,37 @@
+  /* ---------- Vista 2D / 3D (inlinato dal build da vista-3d/aggancio.css) ---------- */
+  #vista-dd {
+    display: inline-flex; flex: 0 0 auto; align-self: center; gap: 2px; padding: 3px; margin: 0 8px 0 4px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+  }
+  #vista-dd[hidden] { display: none; }
+  #vista-dd button {
+    font-family: var(--font); font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; color: var(--ink-soft);
+    background: transparent; border: 0; border-radius: 999px; padding: 6px 13px; min-height: 30px; cursor: pointer;
+    transition: background 0.18s var(--ease), color 0.18s var(--ease);
+  }
+  #vista-dd button:hover { color: var(--amaranto); }
+  #vista-dd button[aria-pressed="true"] { background: var(--amaranto); color: #fff; }
+  #vista-dd button:focus-visible { outline: 2px solid var(--amaranto); outline-offset: 2px; }
+  /* Sopra mappa e pannelli della 2D (1000-1001), sotto "Elenco" (1100), drawer e avvisi. */
+  #vista-3d { position: absolute; inset: 0; z-index: 1050; background: #EDE8E1; }
+  #vista-3d[hidden] { display: none; }
+  #vista-3d .v3d-attesa {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    padding: 10px 18px; border-radius: 999px; background: var(--panel); box-shadow: var(--shadow);
+    font-family: var(--font); font-size: 13px; font-weight: 700; color: var(--ink-soft);
+  }
+  body.presentazione-on #vista-dd { display: none !important; }
+  /* Scheda della 2D sopra la 3D (nell'area): sopra #vista-3d (1050), sotto la pillola
+     2D/3D (1110), "Elenco" e il drawer. */
+  body.vista-3d-on #info-panel { z-index: 1060; }
+  /* Telefono: la cornice della 2D (barra, cartiglio, tasto posizione, fogli) sta sopra la
+     3D; il cartiglio e la "vista d'insieme" della 3D lasciano il posto ai suoi. */
+  @media (max-width: 720px), (max-height: 500px) and (pointer: coarse) {
+    body.vista-3d-on .leaflet-top.leaflet-left { z-index: 1106; }
+    #vista-3d .v3d-reset, #vista-3d .v3d-cartiglio { display: none !important; }
+  }
+  /* Pannello Servizi della 2D sopra la 3D (nell'area), come la scheda: sotto la legenda come
+     nella 2D. Inset, freccia nord e "A piedi in 15 minuti" sono coperti dalla 3D: via del tutto,
+     cosi' posizionaServiziPanel non li conta e le caselle hanno l'altezza della mappa. */
+  body.vista-3d-on #servizi-panel { z-index: 1060; }
+  body.vista-3d-on #inset, body.vista-3d-on #northarrow, body.vista-3d-on #q15-toggle { display: none; }

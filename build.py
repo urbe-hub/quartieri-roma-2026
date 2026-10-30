@@ -1,0 +1,614 @@
+#!/usr/bin/env python3
+"""
+Builder della mappa "Quartieri di Roma 2026": esploratore pubblico della nuova
+geografia amministrativa di Roma, nella palette amaranto (senza il marchio di Roma
+Capitale). Un progetto di Urbe Hub con i dati aperti di Roma Capitale.
+
+I dati arrivano gia' neutri (geometria e superficie) e stanno in data/. La neutralita'
+del bundle e' blindata da:
+  1. la whitelist delle properties (sotto), che ricostruisce le FeatureCollection
+     tenendo solo i campi geografici consentiti, scartando tutto il resto;
+  2. il gate a pattern check_zero_footprint.py, eseguito sul bundle finale (importato
+     in modo facoltativo: i termini stanno in zero_footprint_termini.json, se presente).
+
+Consuma SOLO input dentro questa cartella:
+  - data/quartieri-2026.simplified.geojson  (quartieri/rioni/zone funzionali)
+  - data/municipi-roma.geojson              (confini dei 15 municipi)
+  - data/strade/*.json                      (stradario incrociato con le aree:
+                                             copiato accanto al bundle, la mappa
+                                             lo carica solo quando si cerca una via)
+  - data/servizi/servizi.json               (servizi del focus e dei 15 minuti: Piano dei
+                                             Servizi piu' scuole e presidi, da
+                                             importa_servizi.py; copiato accanto al
+                                             bundle, la mappa lo carica solo al primo
+                                             focus o alla prima citta' dei 15 minuti)
+  - data/rete/                              (rete pedonale OSM in riquadri, fuori da
+                                             git: prepara_rete_pedonale.py; senza, la mappa
+                                             esce senza "A piedi in 15 minuti", e con
+                                             --produzione la build fallisce)
+  - icone/*.svg                             (icone dei servizi, tessere da app con
+                                             l'illustrazione centrata: inlinate nel bundle,
+                                             una per categoria, vedi CATEGORIA_ICONA; si
+                                             rifanno con icone/prepara_icone_app.py)
+  - vendor/leaflet.css, vendor/leaflet.js   (libreria vendorizzata, licenza in vendor/leaflet/)
+  - vendor/fonts/                           (Montserrat, licenza OFL accanto)
+  - brand/urbe-hub-donor.png                (logo Urbe Hub)
+  - brand/og.png                            (anteprima social, facoltativa)
+
+Scrive anche dist/vercel.json: dati a parte (strade, servizi, rete) con cache lunga
+e immutabile, richiesti dalla mappa con ?v=<hash corto del contenuto> (VERSIONI);
+index.html senza cache lunga; header di sicurezza; noindex anche come header, oltre al meta.
+
+Uso:
+    python3 build.py               # anteprima: noindex (meta e header)
+    python3 build.py --produzione  # indicizzabile; fallisce se manca data/rete/
+
+Variabile d'ambiente MAPPA_DIST: cartella di uscita diversa da dist/.
+"""
+
+import base64
+import contextlib
+import hashlib
+import io
+import json
+import os
+import re
+import shutil
+import sys
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+try:
+    from check_zero_footprint import check as check_zero_footprint
+except ImportError:
+    # Il gate e' facoltativo: senza, la build prosegue e lo dice una volta.
+    print("Avviso: check_zero_footprint.py non trovato, build senza gate.", file=sys.stderr)
+
+    def check_zero_footprint(path, strade=False, servizi=False):
+        return 0
+
+TEMPLATE_PATH = SCRIPT_DIR / "mappa-quartieri.template.html"
+# Cartella di uscita: dist/ di default, MAPPA_DIST per costruire altrove senza toccarla.
+DIST_DIR = Path(os.environ.get("MAPPA_DIST", SCRIPT_DIR / "dist")).resolve()
+OUTPUT_PATH = DIST_DIR / "index.html"
+STRADE_SRC = SCRIPT_DIR / "data" / "strade"
+STRADE_OUT = DIST_DIR / "strade"
+SERVIZI_SRC = SCRIPT_DIR / "data" / "servizi"
+SERVIZI_OUT = DIST_DIR / "servizi"
+ICONE_SRC = SCRIPT_DIR / "icone"
+OG_SRC = SCRIPT_DIR / "brand" / "og.png"
+OG_OUT = DIST_DIR / "og.png"
+LEAFLET_LICENSE_SRC = SCRIPT_DIR / "vendor" / "leaflet" / "LICENSE"
+LEAFLET_LICENSE_OUT = DIST_DIR / "leaflet-LICENSE.txt"
+OFL_SRC = SCRIPT_DIR / "vendor" / "fonts" / "OFL.txt"
+OFL_OUT = DIST_DIR / "OFL.txt"
+META_NOINDEX = '<meta name="robots" content="noindex, nofollow">'
+RETE_SRC = SCRIPT_DIR / "data" / "rete"
+RETE_OUT = DIST_DIR / "rete"
+# I 15 minuti leggono lo stesso data/servizi/servizi.json del focus:
+# dist/servizi-15-minuti.json non esiste piu' (si toglie se e' rimasto li').
+QUINDICI_VECCHIO_OUT = DIST_DIR / "servizi-15-minuti.json"
+VERCEL_OUT = DIST_DIR / "vercel.json"
+# Vista 3D: MapLibre vendorizzato + il modulo, copiati in dist/3d/ e scaricati dalla
+# mappa solo al primo "3D"; il tasto e il contratto con la 2D (aggancio) si inlinano.
+VISTA3D_SRC = SCRIPT_DIR / "vista-3d"
+VISTA3D_OUT = DIST_DIR / "3d"
+MAPLIBRE_DIR = SCRIPT_DIR / "vendor" / "maplibre-gl"
+MARKER_VISTA3D_CSS = "/*<<VISTA_3D_CSS>>*/"
+MARKER_VISTA3D_JS = "/*<<VISTA_3D_JS>>*/"
+
+QUARTIERI_PATH = SCRIPT_DIR / "data" / "quartieri-2026.simplified.geojson"
+MUNICIPI_PATH = SCRIPT_DIR / "data" / "municipi-roma.geojson"
+LEAFLET_CSS_PATH = SCRIPT_DIR / "vendor" / "leaflet.css"
+LEAFLET_JS_PATH = SCRIPT_DIR / "vendor" / "leaflet.js"
+URBE_LOGO_PATH = SCRIPT_DIR / "brand" / "urbe-hub-donor.png"
+MONTSERRAT_FONT_PATH = SCRIPT_DIR / "vendor" / "fonts" / "montserrat-latin.woff2"
+
+MARKER_FONTS_CSS = "/*<<FONTS_CSS>>*/"
+MARKER_LEAFLET_CSS = "/*<<LEAFLET_CSS>>*/"
+MARKER_LEAFLET_JS = "/*<<LEAFLET_JS>>*/"
+MARKER_QUARTIERI = "/*<<QUARTIERI>>*/"
+MARKER_MUNICIPI = "/*<<MUNICIPI>>*/"
+MARKER_URBE_LOGO = "<<URBE_LOGO>>"
+MARKER_ICONE_SERVIZI = "/*<<ICONE_SERVIZI>>*/"
+MARKER_VERSIONI = "/*<<VERSIONI>>*/"
+
+
+# Categoria -> file SVG in icone/ (inlinato nel bundle). La categoria
+# "altro" (Universita', Parrocchie, CAF, Carabinieri, Polizia, Sedi Municipi, Stazioni,
+# Aree cani: 9 strati eterogenei senza un'icona comune)
+# resta senza icona per scelta: niente marker sulla mappa, ma il conteggio compare comunque
+# nella scheda dell'area. Scuole (per tipo), case della comunita' e pronto soccorso vengono
+# dalla citta' dei 15 minuti; "sanita" sono solo ambulatori e CUP del Piano dei Servizi, con
+# un'icona propria per non confonderli col pronto soccorso (vedi importa_servizi.py).
+CATEGORIA_ICONA = {
+    "nido": "nido.svg",
+    "infanzia": "infanzia.svg",
+    "primaria": "primaria.svg",
+    "media": "media.svg",
+    "superiore": "superiore.svg",
+    "casa_comunita": "casa-comunita.svg",
+    "pronto_soccorso": "pronto-soccorso.svg",
+    "pronto_soccorso_specialistico": "pronto-soccorso.svg",
+    "pronto_soccorso_pediatrico": "pronto-soccorso.svg",
+    "sanita": "ambulatorio.svg",
+    "farmacie": "farmacia.svg",
+    "parchi_e_aree_gioco": "parco.svg",
+    "musei_e_cultura": "museo.svg",
+    "centri_anziani": "centro-anziani.svg",
+    "impianti_sportivi": "sport.svg",
+    "mercati": "mercato.svg",
+    "biblioteche": "biblioteca.svg",
+    "consultori": "consultorio.svg",
+}
+
+# Whitelist delle properties: garanzia sul CONTENUTO, non solo sui file di input.
+# Qualunque property fuori da questi elenchi viene scartata prima dell'inlining.
+QUARTIERI_PROPERTIES_WHITELIST = (
+    "denominazione",
+    "tipo",
+    "municipio",
+    "municipio_num_arabo",
+    "codice",
+    "superficie_kmq",
+    "classe_funzionalita",
+)
+MUNICIPI_PROPERTIES_WHITELIST = (
+    "municipio",
+    "name",
+    "romano",
+)
+
+
+# Accenti mancanti nei toponimi: la vocale finale accentata (A) e' scritta come
+# apostrofo (A'). Correzione SOLO su questa classe, con match esatto sull'intera
+# denominazione: gli apostrofi legittimi restano intatti per costruzione, incluse
+# le elisioni "DE'" (CASAL DE' PAZZI, TOR DE' CENCI...) e SANT'/DELL'/D'.
+# Fonte confermata: resa ufficiale dei toponimi (Cinecitta', Citta', Pieta', Universita').
+DENOMINAZIONI_ACCENTI = {
+    "CINECITTA'": "CINECITTÀ",
+    "CINECITTA' EST": "CINECITTÀ EST",
+    "CITTA' MILITARE DELLA CECCHIGNOLA": "CITTÀ MILITARE DELLA CECCHIGNOLA",
+    "LAMARO - CINECITTA'": "LAMARO - CINECITTÀ",
+    "SANTA MARIA DELLA PIETA'": "SANTA MARIA DELLA PIETÀ",
+    "SAPIENZA UNIVERSITA'": "SAPIENZA UNIVERSITÀ",
+    "TOR VERGATA UNIVERSITA'": "TOR VERGATA UNIVERSITÀ",
+}
+
+
+def normalizza_denominazioni(geojson):
+    for feature in geojson.get("features", []):
+        props = feature.get("properties") or {}
+        nome = props.get("denominazione")
+        if nome in DENOMINAZIONI_ACCENTI:
+            props["denominazione"] = DENOMINAZIONI_ACCENTI[nome]
+    return geojson
+
+
+def whitelist_feature_collection(geojson, properties_whitelist):
+    features_in = geojson.get("features", []) if isinstance(geojson, dict) else []
+    features_out = []
+    for feature in features_in:
+        props_in = feature.get("properties") or {}
+        props_out = {
+            chiave: props_in[chiave]
+            for chiave in properties_whitelist
+            if chiave in props_in
+        }
+        features_out.append({
+            "type": "Feature",
+            "properties": props_out,
+            "geometry": feature.get("geometry"),
+        })
+    return {"type": "FeatureCollection", "features": features_out}
+
+
+def anello_a_delta(anello):
+    # [[lon, lat], ...] -> [x0, y0, dx1, dy1, ...] in interi da 1e-5 gradi (~1 m): stessa
+    # precisione utile del geojson semplificato, meta' del peso. Il template la ricostruisce.
+    out, px, py = [], 0, 0
+    for lon, lat in anello:
+        x, y = int(round(lon * 1e5)), int(round(lat * 1e5))
+        out += [x - px, y - py]
+        px, py = x, y
+    return out
+
+
+def compatta_feature_collection(geojson):
+    # Ogni feature diventa [properties, poligoni] (sempre MultiPolygon): le properties
+    # arrivano gia' dalla whitelist, qui cambia solo la scrittura della geometria.
+    compatte = []
+    for f in geojson["features"]:
+        g = f["geometry"]
+        if g["type"] == "Polygon":
+            poligoni = [g["coordinates"]]
+        elif g["type"] == "MultiPolygon":
+            poligoni = g["coordinates"]
+        else:
+            raise SystemExit("Errore: geometria non prevista (" + str(g["type"]) + ") nei quartieri.")
+        compatte.append([f["properties"], [[anello_a_delta(a) for a in pol] for pol in poligoni]])
+    return compatte
+
+
+def hash_corto(files):
+    h = hashlib.sha1()
+    for f in sorted(files):
+        h.update(f.name.encode("utf-8"))
+        h.update(f.read_bytes())
+    return h.hexdigest()[:10]
+
+
+# CSP in sola segnalazione: pagina con script e stili inline, font in data:, tile
+# OpenStreetMap (immagini e fetch), worker blob: di MapLibre. Niente frame-ancestors: la
+# mappa si puo' incorniciare in altre pagine. Se le tile cambiano fornitore, va cambiato
+# anche l'host qui.
+CSP_REPORT_ONLY = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' blob:; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob: https://tile.openstreetmap.org; "
+    "font-src 'self' data:; "
+    "connect-src 'self' https://tile.openstreetmap.org; "
+    "worker-src 'self' blob:; "
+    "object-src 'none'; base-uri 'self'; form-action 'self'"
+)
+
+
+def config_vercel(produzione=False):
+    # dist/ e' la cartella pubblicata: i dati cambiano nome (?v=) quando cambiano, quindi
+    # possono restare in cache per un anno; index.html si rivalida sempre. Il noindex sta
+    # anche qui come header (per i JSON che non hanno il meta), tranne in produzione.
+    immutabile = [{"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}]
+    generale = [
+        {"key": "X-Content-Type-Options", "value": "nosniff"},
+        {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"},
+        {"key": "Content-Security-Policy-Report-Only", "value": CSP_REPORT_ONLY},
+    ]
+    if not produzione:
+        generale.insert(0, {"key": "X-Robots-Tag", "value": "noindex, nofollow"})
+    return {
+        "headers": [
+            {"source": "/(.*)", "headers": generale},
+            {"source": "/", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]},
+            {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]},
+            {"source": "/strade/(.*)", "headers": immutabile},
+            {"source": "/rete/(.*)", "headers": immutabile},
+            {"source": "/servizi/(.*)", "headers": immutabile},
+            {"source": "/3d/(.*)", "headers": immutabile},
+        ]
+    }
+
+
+def scrivi_vercel_json(produzione=False):
+    VERCEL_OUT.write_text(json.dumps(config_vercel(produzione), indent=2) + "\n", encoding="utf-8")
+
+
+def senza_noindex(html):
+    # Versione indicizzabile: toglie il meta robots dall'output (il template resta noindex).
+    if META_NOINDEX not in html:
+        raise SystemExit("Errore: meta noindex non trovato nel template, impossibile toglierlo.")
+    return html.replace(META_NOINDEX + "\n", "", 1).replace(META_NOINDEX, "", 1)
+
+
+def copia_licenze_e_og():
+    # Testi di licenza di Leaflet e Montserrat accanto al bundle; l'anteprima social si
+    # copia solo se c'e'.
+    for src, out in ((LEAFLET_LICENSE_SRC, LEAFLET_LICENSE_OUT), (OFL_SRC, OFL_OUT)):
+        if not src.exists():
+            raise SystemExit("Errore: licenza mancante " + str(src) + ".")
+        shutil.copyfile(src, out)
+    if OG_SRC.exists():
+        shutil.copyfile(OG_SRC, OG_OUT)
+    elif OG_OUT.exists():
+        OG_OUT.unlink()
+
+
+def leggi_input_obbligatorio(path):
+    if not path.exists():
+        raise SystemExit(
+            "Errore: input mancante " + str(path) + ". Il builder non puo' "
+            "procedere (nessun fallback su altri dati)."
+        )
+    return path.read_text(encoding="utf-8")
+
+
+def leggi_binario_obbligatorio(path):
+    if not path.exists():
+        raise SystemExit("Errore: asset mancante " + str(path) + ".")
+    return path.read_bytes()
+
+
+def data_uri_png(path):
+    b = leggi_binario_obbligatorio(path)
+    return "data:image/png;base64," + base64.b64encode(b).decode("ascii")
+
+
+def costruisci_fonts_css():
+    # Montserrat come font variabile (asse peso 100-900), subset latin, inlinato
+    # in base64: nessun fetch a Google a runtime (self-contained reale + niente
+    # IP dei visitatori a Google, che in UE e' stato giudicato violazione GDPR).
+    b = leggi_binario_obbligatorio(MONTSERRAT_FONT_PATH)
+    b64 = base64.b64encode(b).decode("ascii")
+    return (
+        "@font-face{font-family:'Montserrat';font-style:normal;"
+        "font-weight:100 900;font-display:swap;"
+        "src:url('data:font/woff2;base64," + b64 + "') format('woff2');}"
+    )
+
+
+def escava_chiusura_script(testo):
+    # Il parser HTML chiude lo <script> su "</script" in modo case-insensitive:
+    # neutralizziamo ogni variante di maiuscole/minuscole, non solo i due casi estremi.
+    return re.sub(r"</(script)", r"<\\/\1", testo, flags=re.IGNORECASE)
+
+
+def dump_json_sicuro(dati):
+    testo = json.dumps(dati, ensure_ascii=False, separators=(",", ":"))
+    return testo.replace("</", "<\\/")
+
+
+def copia_strade():
+    # Le vie viaggiano come file a parte (4 MB, troppi da inlinare): la mappa li
+    # chiede con fetch alla prima ricerca. Si riscrivono campo per campo, cosi'
+    # in dist/ non arriva nulla oltre a nome, aree, metri e tracciato.
+    if not (STRADE_SRC / "indice.json").exists():
+        raise SystemExit("Errore: input mancante " + str(STRADE_SRC / "indice.json") + ".")
+    if STRADE_OUT.exists():
+        shutil.rmtree(STRADE_OUT)
+    STRADE_OUT.mkdir(parents=True)
+    indice = json.loads((STRADE_SRC / "indice.json").read_text(encoding="utf-8"))
+    vie = [[str(nome), [str(c) for c in aree]] for nome, aree in indice["vie"]]
+    (STRADE_OUT / "indice.json").write_text(dump_json_sicuro({"vie": vie}), encoding="utf-8")
+    for f in sorted(STRADE_SRC.glob("m*.json")):
+        dati = json.loads(f.read_text(encoding="utf-8"))
+        quartieri = {
+            str(cod): [[str(r[0]), int(r[1]), r[2]] for r in righe]
+            for cod, righe in dati["quartieri"].items()
+        }
+        (STRADE_OUT / f.name).write_text(dump_json_sicuro({"quartieri": quartieri}), encoding="utf-8")
+    for f in sorted(STRADE_OUT.glob("*.json")):
+        if check_zero_footprint(f, strade=True) != 0:
+            raise SystemExit("Errore: il gate ha trovato footprint in " + str(f) + ". Build FALLITA.")
+    print("Strade: " + str(len(vie)) + " vie, gate OK su "
+          + str(len(list(STRADE_OUT.glob("*.json")))) + " file.")
+    return hash_corto(list(STRADE_OUT.glob("*.json")))
+
+
+def costruisci_icone_servizi():
+    # Un SVG per categoria, letto cosi' com'e' (niente binario, niente base64: e' solo
+    # markup e un <title> in italiano, il gate lo attraversa come il resto del bundle).
+    icone = {}
+    for categoria, nomefile in CATEGORIA_ICONA.items():
+        path = ICONE_SRC / nomefile
+        if not path.exists():
+            raise SystemExit("Errore: icona mancante " + str(path) + ".")
+        icone[categoria] = path.read_text(encoding="utf-8").strip()
+    return icone
+
+
+# Campo 9 delle righe dei servizi (scheda del servizio): chiavi note e tipi, niente altro.
+# m codici meccanografici, w siti web, ic istituto di riferimento, p posti, z sezioni, l chiuso per lavori.
+_RE_CODICE_MIM = re.compile(r"^[A-Za-z0-9]{6,12}$")
+
+
+def info_servizio_valida(info, riga):
+    def errore(perche):
+        raise SystemExit("Errore: info non valida (" + perche + ") in servizi.json: " + str(riga)[:120])
+    if not isinstance(info, dict):
+        errore("non e' un oggetto")
+    pulita = {}
+    for k, v in info.items():
+        if k == "m":
+            if not isinstance(v, list) or not all(isinstance(x, str) and _RE_CODICE_MIM.match(x) for x in v):
+                errore("m")
+            if v: pulita["m"] = list(v)
+        elif k == "w":
+            if not isinstance(v, list) or not all(isinstance(x, str) and re.match(r"^https?://\S+$", x) for x in v):
+                errore("w")
+            if v: pulita["w"] = list(v)
+        elif k == "ic":
+            if not isinstance(v, str):
+                errore("ic")
+            if v.strip(): pulita["ic"] = v.strip()
+        elif k in ("p", "z"):
+            if isinstance(v, bool) or not isinstance(v, int) or v < 0:
+                errore(k)
+            if v: pulita[k] = v
+        elif k == "l":
+            if isinstance(v, bool) or v not in (0, 1):
+                errore("l")
+            if v: pulita["l"] = 1
+        else:
+            errore("chiave sconosciuta " + str(k))
+    return pulita
+
+
+def copia_servizi():
+    # Stessa logica di copia_strade(): i punti dei servizi non entrano nel bundle, la
+    # mappa li chiede con fetch al primo focus o alla prima citta' dei 15 minuti (un solo
+    # file per le due modalita'). Formato a righe {c: [categorie], p: [[indice categoria,
+    # nome, codice area, municipio, lat, lon, (indirizzo, dettaglio, "prevista", info)]]},
+    # riscritto campo per campo: nient'altro arriva in dist/.
+    servizi_path = SERVIZI_SRC / "servizi.json"
+    if not servizi_path.exists():
+        raise SystemExit("Errore: input mancante " + str(servizi_path) + " (python3 importa_servizi.py).")
+    try:
+        dati = json.loads(servizi_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit("Errore: " + str(servizi_path) + " non valido (" + str(exc) + ").")
+    categorie = [str(c) for c in dati["c"]]
+    fuori = [c for c in categorie if c not in CATEGORIA_ICONA]
+    if fuori:
+        raise SystemExit("Errore: categorie senza icona in " + str(servizi_path) + ": " + ", ".join(fuori))
+    punti = []
+    for r in dati["p"]:
+        if not (6 <= len(r) <= 10) or not (0 <= int(r[0]) < len(categorie)) or (len(r) >= 9 and r[8] not in ("", "prevista")):
+            raise SystemExit("Errore: riga non valida in " + str(servizi_path) + ": " + str(r)[:120])
+        # campi 6-8 testo; campo 9 = info, oggetto facoltativo che passa com'e' ma validato
+        riga = [int(r[0]), str(r[1]), str(r[2]), str(r[3]), round(float(r[4]), 5), round(float(r[5]), 5)] + [str(x) for x in r[6:9]]
+        if len(r) == 10:
+            info = info_servizio_valida(r[9], r)
+            if info:
+                riga += [""] * (9 - len(riga)) + [info]
+        punti.append(riga)
+
+    if SERVIZI_OUT.exists():
+        shutil.rmtree(SERVIZI_OUT)
+    SERVIZI_OUT.mkdir(parents=True)
+    out_servizi = SERVIZI_OUT / "servizi.json"
+    out_servizi.write_text(dump_json_sicuro({"c": categorie, "p": punti}), encoding="utf-8")
+    # Gate in modalita' servizi (nomi omonimi) e strade (indirizzi sulle vie omonime).
+    if check_zero_footprint(out_servizi, strade=True, servizi=True) != 0:
+        raise SystemExit("Errore: il gate ha trovato footprint in " + str(out_servizi) + ". Build FALLITA.")
+    print("Servizi: " + str(len(punti)) + " punti in " + str(len(categorie)) + " categorie, gate OK.")
+    return hash_corto([out_servizi])
+
+
+def copia_rete(produzione=False):
+    # Citta' dei 15 minuti: la rete pedonale (solo geometria, ~20 MB in 1.175 riquadri,
+    # fuori da git: si rifa' con prepara_rete_pedonale.py). Senza rete la build di
+    # anteprima non si ferma: avvisa e la mappa esce senza "A piedi in 15 minuti" (versione a None).
+    if RETE_OUT.exists():
+        shutil.rmtree(RETE_OUT)
+    if QUINDICI_VECCHIO_OUT.exists():
+        QUINDICI_VECCHIO_OUT.unlink()
+    if not (RETE_SRC / "indice.json").exists():
+        if produzione:
+            raise SystemExit("Errore: manca la rete pedonale " + str(RETE_SRC) + ": la build di produzione "
+                             "non esce senza \"A piedi in 15 minuti\" (python3 prepara_rete_pedonale.py).")
+        print("ATTENZIONE: manca la rete pedonale " + str(RETE_SRC) + ": la mappa esce SENZA "
+              "\"A piedi in 15 minuti\". Per riaverla vedi README, sezione citta' dei 15 minuti.")
+        return None
+    shutil.copytree(RETE_SRC, RETE_OUT)
+    # La rete passa dal gate, file per file: e' solo geometria, ma dist/ si pubblica
+    # tutta. In silenzio sui file puliti (sono 1.176), a voce sul primo sporco.
+    file_rete = sorted(RETE_OUT.glob("*.json"))
+    for f in file_rete:
+        uscita = io.StringIO()
+        with contextlib.redirect_stdout(uscita):
+            esito = check_zero_footprint(f)
+        if esito != 0:
+            print(uscita.getvalue())
+            raise SystemExit("Errore: il gate ha trovato footprint in " + str(f) + ". Build FALLITA.")
+    print("15 minuti: " + str(len(list(RETE_OUT.glob("r*.json")))) + " riquadri di rete, gate OK su "
+          + str(len(file_rete)) + " file.")
+    return hash_corto(file_rete)
+
+
+def copia_vista_3d():
+    # MapLibre GL 4.7.1 (BSD-3, licenza accanto) e il modulo della vista 3D. Il gate passa
+    # su ogni file. Nel MapLibre minificato quattro accessi "p.d" (polylabel) possono
+    # somigliare a una sigla dell'elenco dei termini: si riscrivono p["d"], identico per JavaScript; il conteggio
+    # esatto fa fallire il build se una nuova versione cambia il codice.
+    if VISTA3D_OUT.exists():
+        shutil.rmtree(VISTA3D_OUT)
+    VISTA3D_OUT.mkdir(parents=True)
+    js = leggi_input_obbligatorio(MAPLIBRE_DIR / "maplibre-gl.js")
+    js, n = re.subn(r"\bp\.d\b", 'p["d"]', js)
+    if n != 4:
+        raise SystemExit("Errore: attesi 4 accessi p.d in maplibre-gl.js, trovati " + str(n) + ".")
+    js = re.sub(r"\n//# sourceMappingURL=\S+\s*$", "\n", js)   # la .map non si pubblica
+    (VISTA3D_OUT / "maplibre-gl.js").write_text(js, encoding="utf-8")
+    for src, nome in ((MAPLIBRE_DIR / "maplibre-gl.css", "maplibre-gl.css"),
+                      (MAPLIBRE_DIR / "LICENSE.txt", "LICENSE-maplibre-gl.txt"),
+                      (VISTA3D_SRC / "vista-3d.js", "vista-3d.js"),
+                      (VISTA3D_SRC / "vista-3d.css", "vista-3d.css")):
+        (VISTA3D_OUT / nome).write_text(leggi_input_obbligatorio(src), encoding="utf-8")
+    file_3d = sorted(VISTA3D_OUT.iterdir())
+    for f in file_3d:
+        uscita = io.StringIO()
+        with contextlib.redirect_stdout(uscita):
+            esito = check_zero_footprint(f)
+        if esito != 0:
+            print(uscita.getvalue())
+            raise SystemExit("Errore: il gate ha trovato footprint in " + str(f) + ". Build FALLITA.")
+    print("Vista 3D: " + str(len(file_3d)) + " file in dist/3d/, gate OK.")
+    return hash_corto(file_3d)
+
+
+def main(argv=None):
+    produzione = "--produzione" in (sys.argv[1:] if argv is None else argv)
+    print("Mappa Quartieri di Roma 2026: avvio build" + (" di produzione." if produzione else "."))
+
+    template = leggi_input_obbligatorio(TEMPLATE_PATH)
+    leaflet_css = leggi_input_obbligatorio(LEAFLET_CSS_PATH)
+    leaflet_js = leggi_input_obbligatorio(LEAFLET_JS_PATH)
+    quartieri_raw = leggi_input_obbligatorio(QUARTIERI_PATH)
+    municipi_raw = leggi_input_obbligatorio(MUNICIPI_PATH)
+
+    try:
+        quartieri_geojson = json.loads(quartieri_raw)
+    except json.JSONDecodeError as exc:
+        raise SystemExit("Errore: " + str(QUARTIERI_PATH) + " non valido (" + str(exc) + ").")
+    try:
+        municipi_geojson = json.loads(municipi_raw)
+    except json.JSONDecodeError as exc:
+        raise SystemExit("Errore: " + str(MUNICIPI_PATH) + " non valido (" + str(exc) + ").")
+
+    n_quartieri = len(quartieri_geojson.get("features", []))
+    n_municipi = len(municipi_geojson.get("features", []))
+    print("Letti " + str(n_quartieri) + " quartieri/rioni/zone funzionali.")
+    print("Letti " + str(n_municipi) + " confini di municipio.")
+
+    quartieri_geojson = whitelist_feature_collection(quartieri_geojson, QUARTIERI_PROPERTIES_WHITELIST)
+    quartieri_geojson = normalizza_denominazioni(quartieri_geojson)
+    municipi_geojson = whitelist_feature_collection(municipi_geojson, MUNICIPI_PROPERTIES_WHITELIST)
+    print("Properties ricostruite con whitelist.")
+
+    urbe_logo = data_uri_png(URBE_LOGO_PATH)
+    icone_servizi = costruisci_icone_servizi()
+    print("Icone servizi: " + str(len(icone_servizi)) + " categorie inlinate.")
+
+    # Prima i dati a parte (gate compreso), poi il bundle: index.html porta l'hash di
+    # ciascun gruppo di file e chiede ?v=<hash>, cosi' la cache lunga non serve mai
+    # un file vecchio.
+    versioni = {
+        "strade": copia_strade(),
+        "servizi": copia_servizi(),
+        "rete": copia_rete(produzione),
+        "3d": copia_vista_3d(),
+    }
+    scrivi_vercel_json(produzione)
+    copia_licenze_e_og()
+
+    for marker in (MARKER_FONTS_CSS, MARKER_LEAFLET_CSS, MARKER_LEAFLET_JS, MARKER_QUARTIERI,
+                   MARKER_MUNICIPI, MARKER_URBE_LOGO, MARKER_ICONE_SERVIZI, MARKER_VERSIONI,
+                   MARKER_VISTA3D_CSS, MARKER_VISTA3D_JS):
+        occorrenze = template.count(marker)
+        if occorrenze != 1:
+            raise SystemExit(
+                "Errore: marker " + marker + " atteso esattamente 1 volta, trovato "
+                + str(occorrenze) + " nel template."
+            )
+
+    output = senza_noindex(template) if produzione else template
+    output = output.replace(MARKER_FONTS_CSS, costruisci_fonts_css())
+    output = output.replace(MARKER_LEAFLET_CSS, leaflet_css)
+    output = output.replace(MARKER_LEAFLET_JS, escava_chiusura_script(leaflet_js))
+    output = output.replace(MARKER_QUARTIERI, dump_json_sicuro(compatta_feature_collection(quartieri_geojson)))
+    output = output.replace(MARKER_MUNICIPI, dump_json_sicuro(municipi_geojson))
+    output = output.replace(MARKER_URBE_LOGO, urbe_logo)
+    output = output.replace(MARKER_ICONE_SERVIZI, dump_json_sicuro(icone_servizi))
+    output = output.replace(MARKER_VERSIONI, dump_json_sicuro(versioni))
+    output = output.replace(MARKER_VISTA3D_CSS, leggi_input_obbligatorio(VISTA3D_SRC / "aggancio.css"))
+    output = output.replace(MARKER_VISTA3D_JS, escava_chiusura_script(leggi_input_obbligatorio(VISTA3D_SRC / "aggancio.js")))
+
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_PATH.write_text(output, encoding="utf-8")
+    print("Scritto " + str(OUTPUT_PATH) + " (" + str(len(output)) + " caratteri).")
+
+    esito_gate = check_zero_footprint(OUTPUT_PATH)
+    if esito_gate != 0:
+        raise SystemExit(
+            "Errore: il gate zero-footprint ha trovato footprint nel bundle "
+            "(" + str(OUTPUT_PATH) + "). Build FALLITA, output NON pubblicabile."
+        )
+    print("Gate zero-footprint: OK, nessun footprint nel bundle.")
+    print("Build completata.")
+
+
+if __name__ == "__main__":
+    main()

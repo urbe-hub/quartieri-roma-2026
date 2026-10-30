@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="casa-comunita-t">
+  <title id="casa-comunita-t">Casa della Comunità</title>
+  <defs>
+    <linearGradient id="casa-comunita-fondo" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FF8A80"/><stop offset="1" stop-color="#E0443E"/></linearGradient>
+    <linearGradient id="casa-comunita-luce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14.5" fill="url(#casa-comunita-fondo)"/>
+  <rect width="64" height="64" rx="14.5" fill="url(#casa-comunita-luce)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.0" fill="none" stroke="#3A2420" stroke-opacity="0.12"/>
+  <g transform="translate(-6.7 0.44) scale(1.1056)">
+  <polygon points="20,27 28,15 36,15 44,27" fill="#8E001C" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <polygon points="36,15 42,11 50,23 44,27" fill="#720017" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="22" y="27" width="20" height="20" fill="#F7F0E4" stroke="#3A2420" stroke-width="1.4"/>
+  <polygon points="42,27 48,23 48,43 42,47" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="25" y="34" width="5" height="5" fill="#FFFFFF" stroke="#3A2420" stroke-width="1"/>
+  <rect x="34" y="34" width="5" height="5" fill="#FFFFFF" stroke="#3A2420" stroke-width="1"/>
+  <rect x="29.5" y="39" width="5" height="8" rx="1" fill="#5B4440"/>
+  <circle cx="32" cy="30.5" r="3.5" fill="#FFFFFF" stroke="#C9A24A" stroke-width="1.4"/>
+  <rect x="31" y="28" width="2" height="5" fill="#8E001C"/>
+  <rect x="29.5" y="29.5" width="5" height="2" fill="#8E001C"/>
+  </g>
+</svg>

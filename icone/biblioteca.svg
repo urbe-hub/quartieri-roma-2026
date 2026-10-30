@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="biblioteca-t">
+  <title id="biblioteca-t">Biblioteca</title>
+  <defs>
+    <linearGradient id="biblioteca-fondo" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#B9A6FF"/><stop offset="1" stop-color="#7058D6"/></linearGradient>
+    <linearGradient id="biblioteca-luce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14.5" fill="url(#biblioteca-fondo)"/>
+  <rect width="64" height="64" rx="14.5" fill="url(#biblioteca-luce)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.0" fill="none" stroke="#3A2420" stroke-opacity="0.12"/>
+  <g transform="translate(-7.77 -3.86) scale(1.1364)">
+  <rect x="20" y="25" width="24" height="22" fill="#F7F0E4" stroke="#3A2420" stroke-width="1.4"/>
+  <polygon points="44,25 50,21 50,43 44,47" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="18" y="21" width="28" height="4" fill="#C9A24A" stroke="#3A2420" stroke-width="1.4"/>
+  <polygon points="46,21 52,17 52,21 46,25" fill="#A9823A" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M24.5,28 Q32,25.3 32,28 L32,37 Q24.5,34.3 24.5,37 Z" fill="#FFFFFF" stroke="#3A2420" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="M39.5,28 Q32,25.3 32,28 L32,37 Q39.5,34.3 39.5,37 Z" fill="#FFFFFF" stroke="#3A2420" stroke-width="1.2" stroke-linejoin="round"/>
+  <rect x="30.5" y="19" width="3" height="10" fill="#8E001C"/>
+  <rect x="29.5" y="41" width="5" height="6" rx="1" fill="#5B4440"/>
+  </g>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="centro-anziani-t">
+  <title id="centro-anziani-t">Centro anziani</title>
+  <defs>
+    <linearGradient id="centro-anziani-fondo" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FFB37A"/><stop offset="1" stop-color="#E0752E"/></linearGradient>
+    <linearGradient id="centro-anziani-luce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14.5" fill="url(#centro-anziani-fondo)"/>
+  <rect width="64" height="64" rx="14.5" fill="url(#centro-anziani-luce)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.0" fill="none" stroke="#3A2420" stroke-opacity="0.12"/>
+  <g transform="translate(-6.03 0.44) scale(1.0867)">
+  <polygon points="19,28 32,16 45,28" fill="#C9A24A" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <polygon points="32,16 38,12 51,24 45,28" fill="#A9823A" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="21" y="28" width="22" height="19" fill="#F7F0E4" stroke="#3A2420" stroke-width="1.4"/>
+  <polygon points="43,28 49,24 49,43 43,47" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="25" y="35" width="5" height="5" fill="#FFFFFF" stroke="#3A2420" stroke-width="1"/>
+  <rect x="34" y="35" width="5" height="5" fill="#FFFFFF" stroke="#3A2420" stroke-width="1"/>
+  <circle cx="32" cy="30.5" r="3.5" fill="#FFFFFF" stroke="#C9A24A" stroke-width="1.4"/>
+  <circle cx="30.3" cy="29.6" r="1.4" fill="#8E001C"/>
+  <circle cx="33.7" cy="29.6" r="1.4" fill="#8E001C"/>
+  <polygon points="28.6,30.4 32,33.6 35.4,30.4" fill="#8E001C"/>
+  <rect x="29.5" y="40" width="5" height="7" rx="1" fill="#5B4440"/>
+  </g>
+</svg>

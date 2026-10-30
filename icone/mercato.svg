@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="mercato-t">
+  <title id="mercato-t">Mercato rionale</title>
+  <defs>
+    <linearGradient id="mercato-fondo" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FFB37A"/><stop offset="1" stop-color="#E0752E"/></linearGradient>
+    <linearGradient id="mercato-luce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14.5" fill="url(#mercato-fondo)"/>
+  <rect width="64" height="64" rx="14.5" fill="url(#mercato-luce)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.0" fill="none" stroke="#3A2420" stroke-opacity="0.12"/>
+  <g transform="translate(-3.47 3.11) scale(1.0133)">
+  <rect x="19" y="32" width="26" height="15" fill="#F7F0E4" stroke="#3A2420" stroke-width="1.4"/>
+  <polygon points="45,32 51,28 51,43 45,47" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <polygon points="17,28 21,15 43,15 47,28" fill="#F7F0E4" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <polygon points="43,15 49,11 53,24 47,28" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.4" stroke-linejoin="round"/>
+  <rect x="24" y="15" width="4" height="12" fill="#8E001C"/>
+  <rect x="32" y="15" width="4" height="12" fill="#8E001C"/>
+  <circle cx="20" cy="28" r="2.6" fill="#8E001C" stroke="#3A2420" stroke-width="1"/>
+  <circle cx="28" cy="28" r="2.6" fill="#F7F0E4" stroke="#3A2420" stroke-width="1"/>
+  <circle cx="36" cy="28" r="2.6" fill="#8E001C" stroke="#3A2420" stroke-width="1"/>
+  <circle cx="44" cy="28" r="2.6" fill="#F7F0E4" stroke="#3A2420" stroke-width="1"/>
+  <rect x="19" y="32" width="26" height="3" fill="#C9A24A" stroke="#3A2420" stroke-width="1"/>
+  <circle cx="25" cy="41" r="2.4" fill="#8E001C" stroke="#3A2420" stroke-width="0.8"/>
+  <circle cx="32" cy="40" r="2.6" fill="#C9A24A" stroke="#3A2420" stroke-width="0.8"/>
+  <circle cx="39" cy="41" r="2.4" fill="#720017" stroke="#3A2420" stroke-width="0.8"/>
+  </g>
+</svg>

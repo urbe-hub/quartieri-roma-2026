@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="parco-t">
+  <title id="parco-t">Parco e area giochi</title>
+  <defs>
+    <linearGradient id="parco-fondo" x1="0.3" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#8EDB8A"/><stop offset="1" stop-color="#3E9F57"/></linearGradient>
+    <linearGradient id="parco-luce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.32"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14.5" fill="url(#parco-fondo)"/>
+  <rect width="64" height="64" rx="14.5" fill="url(#parco-luce)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14.0" fill="none" stroke="#3A2420" stroke-opacity="0.12"/>
+  <g transform="translate(3.29 1.32) scale(0.8972)">
+  <rect x="18" y="34" width="6" height="13" fill="#5B4440" stroke="#3A2420" stroke-width="1.3"/>
+  <path d="M6,34 Q21,11 36,34 Z" fill="#C9A24A" stroke="#3A2420" stroke-width="1.5" stroke-linejoin="round"/>
+  <rect x="43" y="25" width="12" height="3.5" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.3"/>
+  <rect x="44" y="41" width="3.5" height="6" fill="#E2D2B8" stroke="#3A2420" stroke-width="1.1"/>
+  <polygon points="46,28.5 58,41 53.5,45.5 41.5,33" fill="#8E001C" stroke="#3A2420" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
+</svg>
