@@ -10,7 +10,7 @@
 <meta property="og:locale" content="it_IT">
 <meta property="og:site_name" content="Quartieri di Roma 2026">
 <meta property="og:title" content="Quartieri di Roma 2026">
-<meta property="og:description" content="Mappa indipendente di Urbe Hub, non un servizio di Roma Capitale: quartieri, rioni e zone funzionali della deliberazione 150/2026, con i servizi raggiungibili a piedi in circa 15 minuti. Confini indicativi.">
+<meta property="og:description" content="La nuova geografia amministrativa della città: quartieri, rioni e zone funzionali, con i servizi raggiungibili a piedi in circa 15 minuti. Progetto indipendente di Urbe Hub.">
 <meta property="og:url" content="https://romaquartieri.it/">
 <meta property="og:image" content="https://romaquartieri.it/og.png">
 <meta property="og:image:width" content="1200">
@@ -537,6 +537,12 @@
   #attribution button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; pointer-events: auto; }
   #attribution button:hover { text-decoration: underline; }
   @media (max-width: 720px), (max-height: 500px) and (pointer: coarse) { #attribution button { text-decoration: underline; text-underline-offset: 2px; padding: 6px 0; margin: -6px 0; } }
+  /* Sotto i 340 px la riga non ci sta: va su due righe bilanciate invece di tagliare
+     "© OpenStreetMap", che la licenza vuole sempre visibile, e il cartiglio sale. */
+  @media (max-width: 339px) {
+    html body #attribution { white-space: normal; text-overflow: clip; text-wrap: balance; line-height: 1.35; }
+    html body #cartiglio { bottom: 38px; }
+  }
 
   /* ---------- Area labels ---------- */
   /* Il marker di Leaflet e' largo 0: la pillola e' uno span assoluto centrato sul punto,
@@ -1369,7 +1375,7 @@
       <span class="eyebrow" id="info-tipo"></span><span class="info-dove" id="info-dove"></span>
       <h2 id="info-denominazione" aria-live="polite"></h2>
       <p class="info-avviso-via" id="info-via-avviso" hidden></p>
-      <p class="info-nonuff">Mappa non ufficiale &middot; confini indicativi</p>
+      <p class="info-nonuff">Confini indicativi: per quelli ufficiali vale la deliberazione n. 150/2026</p>
       <dl>
         <dt>Municipio</dt><dd id="info-municipio"></dd>
         <dt>Funzione</dt><dd id="info-classe"></dd>
@@ -1432,15 +1438,14 @@
       <div class="ab-lv"><span class="lv-mark" style="background:oklch(0.62 0.01 30)"></span><div><div class="lv-t"><span data-tot="ZONA FUNZIONALE"></span> Zone funzionali</div><div class="lv-d">Parchi, aree naturali e comprensori speciali (segnati con il retino).</div></div></div>
     </div>
     <p>Progetto indipendente: non &egrave; un servizio di Roma Capitale. Per i confini ufficiali vale la deliberazione n. 150/2026.</p>
-    <p>Hai trovato un errore (un confine, una via, un servizio chiuso o spostato)? <a href="https://github.com/urbe-hub/quartieri-roma-2026/issues" target="_blank" rel="noopener">Segnalalo su GitHub</a> o scrivi a <a href="mailto:hello@urbe.build">hello@urbe.build</a>. Codice e dati sono pubblici nel <a href="https://github.com/urbe-hub/quartieri-roma-2026" target="_blank" rel="noopener">repository del progetto</a>.</p>
-    <p>Salute: in emergenza chiama il <b>112</b>. La mappa non mostra orari, turni di apertura delle farmacie n&eacute; disponibilit&agrave; dei pronto soccorso: verificali prima di andare.</p>
+    <p>Hai trovato un errore (un confine, una via, un servizio chiuso o spostato)? <a href="https://github.com/urbe-hub/quartieri-roma-2026/issues" target="_blank" rel="noopener">Segnalalo su GitHub</a> o scrivi a <a href="mailto:hello@urbe.build?subject=Segnalazione%20mappa%20quartieri">hello@urbe.build</a>. Codice e dati sono pubblici nel <a href="https://github.com/urbe-hub/quartieri-roma-2026" target="_blank" rel="noopener">repository del progetto</a>.</p>
     <p>La tua posizione non lascia il dispositivo. Le tessere della mappa di base arrivano dai server di OpenStreetMap, che vedono l'indirizzo IP di chi visita la pagina.</p>
     <p>Questa mappa permette di esplorare ogni area, cercarla per nome, trovare in quali aree passa una via, filtrare per tipo e per municipio, e conoscere i dati essenziali. La superficie di ciascuna area &egrave; calcolata dalla geometria a piena risoluzione della fonte; le vie vengono dallo stradario di Roma Capitale.</p>
     <div class="ab-fonti">
       <div class="ab-fonti-t">Fonti</div>
       <p>Dati: Roma Capitale, geoportale GeoRoma, scaricati a ottobre 2026: deliberazione n. 150/2026 (aree), stradario, Piano dei Servizi, servizi educativi 2025/26, numeri civici. Dati aperti (art. 52, comma 2, del CAD); dove la licenza &egrave; dichiarata &egrave; la <a href="https://creativecommons.org/licenses/by/4.0/deed.it" target="_blank" rel="noopener">CC BY 4.0</a>.</p>
       <p>&copy; OpenStreetMap contributors (<a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL</a>): mappa di base, confini dei municipi, posizione di alcuni pronto soccorso e rete pedonale dei 15 minuti. La rete pedonale &egrave; un database derivato da OpenStreetMap, sotto la stessa licenza: il metodo per rifarla &egrave; nel repository del progetto.</p>
-      <p>Farmacie: anagrafe del Ministero della Salute al 30/10/2026 (solo quelle attive), posizioni dai numeri civici di Roma Capitale. Ministero dell'Istruzione e del Merito (<a href="https://www.dati.gov.it/iodl/2.0/" target="_blank" rel="noopener">IODL 2.0</a>): anagrafe delle scuole statali e paritarie, a.s. 2026/27. Case della comunit&agrave;: monitoraggio AGENAS al 31/12/2025. Pronto soccorso: elenco della Regione Lazio.</p>
+      <p>Farmacie: anagrafe del Ministero della Salute (<a href="https://www.dati.gov.it/iodl/2.0/" target="_blank" rel="noopener">IODL 2.0</a>) al 30/10/2026, solo quelle attive, con le posizioni dai numeri civici di Roma Capitale. Ministero dell'Istruzione e del Merito (<a href="https://www.dati.gov.it/iodl/2.0/" target="_blank" rel="noopener">IODL 2.0</a>): anagrafe delle scuole statali e paritarie, a.s. 2026/27. Case della comunit&agrave;: monitoraggio AGENAS al 31/12/2025. Pronto soccorso: elenco della Regione Lazio.</p>
       <p>Dati rielaborati: geometrie semplificate, accorpamenti, geocodifica.</p>
       <p>Software: Leaflet (<a href="leaflet-LICENSE.txt" target="_blank" rel="noopener">BSD-2</a>); vista 3D, MapLibre GL (<a href="3d/LICENSE-maplibre-gl.txt" target="_blank" rel="noopener">BSD-3</a>); carattere Montserrat (<a href="OFL.txt" target="_blank" rel="noopener">SIL OFL 1.1</a>).</p>
     </div>
@@ -1648,9 +1653,9 @@
   // Maschera fuori-Roma: su OSM (affollato) un bianco leggero.
   function stileMaschera() { return { fillColor: "#ffffff", fillOpacity: 0.58 }; }
   // Fonti per esteso nel pannello "Cos'e'"; qui la riga breve, sempre sulla mappa.
-  // "Non ufficiale" sempre visibile, anche su telefono e da un link diretto, dove il
+  // "Progetto indipendente" sempre visibile, anche su telefono e da un link diretto, dove il
   // pannello "Cos'e'" non si apre da solo.
-  document.getElementById("attribution").innerHTML = 'Mappa non ufficiale &middot; <button type="button" id="att-dati">Dati: Roma Capitale</button><span class="att-altre">, GeoRoma e altre fonti</span> &middot; &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap<span class="att-altre"> contributors</span></a>';
+  document.getElementById("attribution").innerHTML = 'Progetto indipendente &middot; <button type="button" id="att-dati">Dati: Roma Capitale</button><span class="att-altre">, GeoRoma e altre fonti</span> &middot; &copy;&nbsp;<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap<span class="att-altre"> contributors</span></a>';
 
   L.control.scale({ position: "bottomright", imperial: false, maxWidth: 130 }).addTo(map);
 
@@ -2592,7 +2597,7 @@
       q = espandiAbbreviazioni(senzaCivico); trovate = cerca(q); civicoTolto = trovate.length > 0;
     }
     if (!trovate.length) {
-      streetEl.innerHTML = '<div class="sr-head">Vie</div><div class="sr-msg">Nessuna via trovata. Lo stradario pu&ograve; non essere completo: se manca una via, <a href="mailto:hello@urbe.build">segnalacela</a>.</div>';
+      streetEl.innerHTML = '<div class="sr-head">Vie</div><div class="sr-msg">Nessuna via trovata. Lo stradario pu&ograve; non essere completo: se manca una via, <a href="mailto:hello@urbe.build?subject=Segnalazione%20mappa%20quartieri">segnalacela</a>.</div>';
       return 0;
     }
     // Prima le vie dove la frase cercata compare intera e presto, poi le piu' corte.
@@ -4807,8 +4812,8 @@
     }
     if (p.minuti) h += '<p class="ss-riga ss-min">' + p.minuti + " min a piedi dal punto</p>";
     // Farmacie e pronto soccorso: la mappa non sa orari, turni e attese.
-    if (p.categoria === "farmacie") h += '<p class="ss-riga ss-det">Orari e turni non sono sulla mappa: verificali prima di andare. In emergenza chiama il 112.</p>';
-    else if (/^pronto_soccorso/.test(p.categoria)) h += '<p class="ss-riga ss-det">In emergenza chiama il 112.</p>';
+    if (p.categoria === "farmacie" || /^pronto_soccorso/.test(p.categoria))
+      h += '<p class="ss-riga ss-det">Orari e turni non sono sulla mappa: verificali prima di andare</p>';
     h += '<div class="ss-azioni">';
     if (VERSIONI.rete) h += '<button type="button" class="ss-q15">' + ICONA_PIEDI + "15 minuti da qui</button>";
     var link = "";

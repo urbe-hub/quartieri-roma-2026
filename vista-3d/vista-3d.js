@@ -559,7 +559,7 @@
         sources: {
           osm: { type: "raster", tiles: [TILE_URL], tileSize: 256, maxzoom: 19,
                  // su telefono il testo corto della 2D; le fonti complete sono in "Cos'e'"
-                 attribution: (S.opt.mobile ? "Mappa non ufficiale · Dati: Roma Capitale · © " : "Mappa non ufficiale · Dati: Roma Capitale, GeoRoma e altre fonti · © ") +
+                 attribution: (S.opt.mobile ? "Progetto indipendente · Dati: Roma Capitale · © " : "Progetto indipendente · Dati: Roma Capitale, GeoRoma e altre fonti · © ") +
                    "<a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">" + (S.opt.mobile ? "OpenStreetMap</a>" : "OpenStreetMap contributors</a>") }
         },
         layers: [
