@@ -4,6 +4,12 @@ La nuova geografia amministrativa di Roma su una mappa che si apre nel browser: 
 
 È un progetto di Urbe Hub con i dati aperti di Roma Capitale. Progetto indipendente: non è un servizio di Roma Capitale. Per i confini ufficiali vale la deliberazione n. 150/2026.
 
+La mappa è online su [romaquartieri.it](https://romaquartieri.it/).
+
+## Segnalare errori
+
+Un confine, una via o un servizio sbagliati, chiusi o spostati: apri una [issue](https://github.com/urbe-hub/quartieri-roma-2026/issues) (o scrivi a hello@urbe.build) indicando l'area o l'indirizzo e, se puoi, la fonte corretta. Le correzioni ai dati passano dagli script descritti in "Dati e rigenerazione".
+
 Il risultato del build è una cartella statica: nessun server applicativo, nessun database, nessun cookie e nessun servizio di statistiche.
 
 ## Come si costruisce
@@ -74,11 +80,11 @@ La pagina si può incorporare in un iframe: non è imposto alcun blocco al frami
 
 I dati sono già pronti in `data/`: confini di quartieri e municipi, stradario, servizi, scuole e presidi. Il build usa solo quei file.
 
-Gli script `importa_dati.py`, `importa_servizi.py`, `prepara_scuole.py`, `prepara_servizi_15_minuti.py` e `prepara_rete_pedonale.py` descrivono come sono stati ottenuti, partendo dai servizi WFS del geoportale di Roma Capitale, dall'anagrafe del Ministero dell'Istruzione e del Merito e dall'estratto OpenStreetMap. Due script prendono la cartella delle fonti da riga di comando: `prepara_servizi_15_minuti.py <cartella fonti> [civici_*.csv ...]` (o con la variabile `MAPPA_FONTI`) e `icone/prepara_icone_app.py [<cartella illustrazioni>]` (o `MAPPA_ILLUSTRAZIONI`). Per le farmacie, `importa_servizi.py --solo-farmacie` porta un file scritto col formato precedente a nome "Farmacia" con l'indirizzo nel campo apposito, senza rete.
+Gli script `importa_dati.py`, `importa_servizi.py`, `prepara_scuole.py`, `prepara_servizi_15_minuti.py` e `prepara_rete_pedonale.py` descrivono come sono stati ottenuti, partendo dai servizi WFS del geoportale di Roma Capitale, dall'anagrafe del Ministero dell'Istruzione e del Merito e dall'estratto OpenStreetMap. Due script prendono la cartella delle fonti da riga di comando: `prepara_servizi_15_minuti.py <cartella fonti> [civici_*.csv ...]` (o con la variabile `MAPPA_FONTI`) e `icone/prepara_icone_app.py [<cartella illustrazioni>]` (o `MAPPA_ILLUSTRAZIONI`). Le farmacie vengono dall'anagrafe del Ministero della Salute (solo quelle attive alla data del file): `prepara_farmacie.py <FRM_FARMA_5_AAAAMMGG.csv> <civici_*.csv ...>` aggancia l'indirizzo ufficiale ai numeri civici di Roma Capitale e riscrive solo la categoria farmacie di `data/servizi/servizi.json`. Va lanciato dopo `importa_servizi.py`, che scrive ancora le farmacie del Piano dei Servizi. I dati attuali sono quelli del file del 30/10/2026, scaricato dalla [pagina del dataset](https://www.dati.salute.gov.it/it/dataset/farmacie/) (licenza IODL 2.0).
 
 Rigenerare i dati dipende da fonti esterne che non sono incluse in questo repository (estratti, elenchi dei civici, file degli enti), quindi non fa parte del normale ciclo di build.
 
-Una nota sullo stradario: in `data/strade/` (14.908 vie) manca Via Cassia Antica, perché lo strato DIPPC:stradario_municipio del geoportale non la contiene (esistono solo Via Cassia e Via Cassia Nuova). Chi la cerca non la trova. Le altre tre vie segnalate sono presenti con grafia diversa da quella del Ministero: Via Romolo Trinchieri, Via Cinigiano e Via Monte Manno. Se il Comune aggiunge Via Cassia Antica, basta rigenerare lo stradario.
+Una nota sullo stradario: `data/strade/` (14.908 vie) viene dallo strato DIPPC:stradario_municipio del geoportale. Rispetto allo strato di oggi mancano circa 46 nomi, per lo più tratti brevi (fra questi Via Paolo VI, Via del Casale di San Paolo, Via Maremmana II, Viale Pariole, Piazza Ravenna, Largo Collodi): chi li cerca non li trova finché lo stradario non viene rigenerato. Via Cassia Antica non c'è né qui né nello strato del geoportale (esistono solo Via Cassia e Via Cassia Nuova). I nomi che finiscono con un numero ("Via Ragazzi del '99", "Largo Tre Giugno 1849") e quelli con un numerale romano ("Piazza Umberto I") sono corretti all'importazione da `importa_dati.py`.
 
 Nella fonte GeoRoma sette nomi di quartiere usano l'apostrofo al posto dell'accento (per esempio "LAMARO - CINECITTA'"). Lo script `importa_dati.py` li corregge all'importazione, e il build li corregge anche nel bundle, quindi la mappa mostra i nomi con l'accento.
 
