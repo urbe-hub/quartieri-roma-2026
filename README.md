@@ -81,6 +81,15 @@ python3 prepara_rete_pedonale.py centro-latest.osm.pbf
 
 L'estratto dell'Italia centrale si scarica da `https://download.geofabrik.de/europe/italy/centro-latest.osm.pbf`. Lo script scrive `data/rete/` (circa 1.175 riquadri). Senza quella cartella il build di anteprima non si ferma: avvisa e la mappa esce senza il pulsante dei 15 minuti, mentre un link `#15=` apre la mappa normale con un avviso.
 
+La 2D mostra anche la mappa di calore dei servizi: per ogni esagono abitato di 250 m, quanti servizi attivi si raggiungono a piedi in 15 minuti, dal viola scuro (pochi) al pesca chiaro (molti), una scala leggibile anche col daltonismo. Le zone con meno di 50 abitanti restano senza colore. Ogni servizio vale uno e ogni colore raccoglie circa gli stessi residenti. Il valore è la mediana di sette punti dell'esagono, perché il centro da solo può cadere su una strada isolata. I minuti si arrotondano come nel pannello dei 15 minuti, quindi 15,49 minuti valgono 15. Nella legenda, "Solo colori" nasconde icone, nomi delle aree e velo del municipio. Il dato (`data/copertura/densita.json`, circa 80 KB) si rifà dopo aver preparato la rete, senza la griglia di popolazione:
+
+```bash
+pip install numpy scipy tifffile
+python3 prepara_densita_15_minuti.py
+```
+
+Un clic su un servizio, in 2D, mostra l'area che si raggiunge a piedi in 15 minuti da lì, sulle strade vere. Un altro servizio la sostituisce e la chiusura della scheda la toglie. Le icone compaiono aprendo un'area o un municipio. Con la modalità "A piedi in 15 minuti" accesa il clic apre solo la scheda e la mappa di calore resta sotto, con le strade raggiungibili in blu. Con un servizio o un punto scelto la legenda si riduce alla scala dei colori.
+
 Lo strato della copertura qui sotto è spento nel rilascio del 2026-11-02: `COPERTURA_NEL_RILASCIO = False` in `build.py`, e la 2D esce come senza il file (niente esagoni, legenda né fonte GHS-POP). Il codice resta; con `True` torna tutto.
 
 La 2D si apre su Roma con le zone dove i servizi essenziali non si raggiungono a piedi in 15 minuti: esagoni di 250 m dove abitano almeno 50 persone, colorati se manca anche uno fra nido, scuola dell'infanzia, primaria, media, farmacia e parco. Case della Comunità e pronto soccorso non colorano la mappa (sono lontani per circa tre residenti su quattro) e compaiono nella scheda della zona, che si apre toccando un esagono colorato e da cui partono i 15 minuti dal punto. Lo strato si spegne con un'area aperta, coi 15 minuti accesi e in 3D; il link `#copertura` lo riapre. Il dato (`data/copertura/copertura.json`, circa 170 KB) si rifà con:
@@ -193,6 +202,7 @@ prepara_farmacie.py              farmacie dall'anagrafe del Ministero della Salu
 prepara_servizi_15_minuti.py     case della comunità e pronto soccorso
 prepara_rete_pedonale.py         rete pedonale da OpenStreetMap
 prepara_copertura_15_minuti.py   copertura dei 15 minuti a esagoni (spenta in questo rilascio)
+prepara_densita_15_minuti.py     servizi a 15 minuti per esagono (mappa di calore della 2D)
 ```
 
 ## Contatti

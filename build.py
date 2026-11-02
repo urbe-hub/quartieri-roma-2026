@@ -103,6 +103,10 @@ COPERTURA_SRC = SCRIPT_DIR / "data" / "copertura" / "copertura.json"
 COPERTURA_OUT = DIST_DIR / "copertura"
 # Spenta in questo rilascio: il codice resta, la build esce come senza il file. Torna con True.
 COPERTURA_NEL_RILASCIO = False
+# Mappa di calore della 2D: quanti servizi si raggiungono a piedi in 15 minuti da ogni
+# esagono (prepara_densita_15_minuti.py). Senza il file la mappa esce senza quello strato.
+DENSITA_SRC = SCRIPT_DIR / "data" / "copertura" / "densita.json"
+DENSITA_OUT = DIST_DIR / "densita"
 # I 15 minuti leggono lo stesso data/servizi/servizi.json del focus:
 # dist/servizi-15-minuti.json non esiste piu' (si toglie se e' rimasto li').
 QUINDICI_VECCHIO_OUT = DIST_DIR / "servizi-15-minuti.json"
@@ -542,6 +546,7 @@ def config_vercel(produzione=False):
             {"source": "/strade/(.*)", "headers": immutabile},
             {"source": "/rete/(.*)", "headers": immutabile},
             {"source": "/copertura/(.*)", "headers": immutabile},
+            {"source": "/densita/(.*)", "headers": immutabile},
             {"source": "/servizi/(.*)", "headers": immutabile},
             {"source": "/3d/(.*)", "headers": immutabile},
         ]
@@ -800,6 +805,37 @@ def copia_copertura():
     return hash_corto([f])
 
 
+def copia_densita():
+    # Esagoni abitati col numero di servizi a 15 minuti, riscritti campo per campo (solo
+    # numeri). Senza il file la build non si ferma: la 2D esce senza mappa di calore.
+    if DENSITA_OUT.exists():
+        shutil.rmtree(DENSITA_OUT)
+    if not DENSITA_SRC.exists():
+        print("ATTENZIONE: manca " + str(DENSITA_SRC) + ": la 2D esce senza mappa di calore "
+              "(python3 prepara_densita_15_minuti.py).")
+        return None
+    try:
+        d = json.loads(DENSITA_SRC.read_text(encoding="utf-8"))
+        e = d["esagono"]
+        esagono = {k: float(e[k]) for k in ("lato", "lat0", "lon0", "kx", "ky")}
+        classi = [int(x) for x in d["classi"]]
+        celle = [int(x) for x in d["celle"]]
+        if not celle or len(celle) % 4 or any(c < 0 for c in celle[3::4]):
+            raise ValueError("celle non coerenti")
+        if not classi or classi[0] != 0 or sorted(set(classi)) != classi:
+            raise ValueError("classi non coerenti")
+        out = {"esagono": esagono, "soglia": int(d["soglia"]), "classi": classi, "celle": celle}
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit("Errore: " + str(DENSITA_SRC) + " non valido (" + str(exc) + ").")
+    DENSITA_OUT.mkdir(parents=True)
+    f = DENSITA_OUT / "densita.json"
+    f.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    if check_zero_footprint(f) != 0:
+        raise SystemExit("Errore: il gate ha trovato footprint in " + str(f) + ". Build FALLITA.")
+    print("Mappa di calore: " + str(len(celle) // 4) + " esagoni, gate OK.")
+    return hash_corto([f])
+
+
 def copia_vista_3d():
     # MapLibre GL 4.7.1 (BSD-3, licenza accanto) e il modulo della vista 3D. Il gate passa
     # su ogni file. Nel MapLibre minificato quattro accessi "p.d" (polylabel) possono
@@ -872,6 +908,7 @@ def main(argv=None):
         "servizi": copia_servizi(),
         "rete": copia_rete(produzione),
         "copertura": copia_copertura(),
+        "densita": copia_densita(),
         "3d": copia_vista_3d(),
     }
     scrivi_vercel_json(produzione)

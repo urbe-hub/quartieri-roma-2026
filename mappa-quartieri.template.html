@@ -468,6 +468,8 @@
      altri si spengono finche' il suo popup e' aperto. Sui figli, perche' opacita' e
      transform del contenitore li tiene l'animazione d'entrata. Vale anche nella 3D. */
   .servizi-scelta .servizio-marker:not(.attiva) > *, .servizi-scelta .servizio-cluster:not(.attiva) > * { opacity: 0.35; filter: saturate(0.4); }
+  /* Con le aree dei 15 minuti le icone restano piene: sbiadite sembrerebbero sotto le aree. */
+  body.aree15-on .servizi-scelta .servizio-marker:not(.attiva) > *, body.aree15-on .servizi-scelta .servizio-cluster:not(.attiva) > * { opacity: 1; filter: none; }
   .servizio-marker > *, .servizio-cluster > * { transition: opacity 0.2s, filter 0.2s, transform 0.16s var(--ease); }
   .servizio-marker.attiva svg, .servizio-cluster.attiva .sc-tessera { transform: scale(1.1); }
   /* Entrata con la molla, a cascata (ritardo nel marker: 30 ms l'uno, al massimo 450). */
@@ -839,6 +841,7 @@
     #info-panel #info-azioni #info-q15-btn svg { width: 14px; height: 14px; }
     #info-panel #info-azioni #info-q15-btn[hidden] { display: none; }
     #info-panel { bottom: 30px; max-height: calc(100% - 44px); width: 250px; }
+    #map-wrap { --den-scheda: 276px; }
     /* largo quanto basta per "Scuole dell'infanzia" e "Vita di quartiere" su una riga */
     #servizi-panel { max-width: 188px; }
   }
@@ -1091,6 +1094,61 @@
      Esagoni abitati da data/copertura/ (prepara_copertura_15_minuti.py) sotto il velo
      del municipio; legenda in basso a sinistra, che su telefono passa nel foglio Livelli. */
   body.cop-on .leaflet-overlay-pane path.leaflet-interactive { fill-opacity: 0.06; stroke-opacity: 0.35; }
+  body.den-on .leaflet-overlay-pane path.leaflet-interactive { fill-opacity: 0.04; stroke-opacity: 0.3; }
+  #densita {
+    position: absolute; left: 12px; bottom: 32px; z-index: 1000; width: 292px; max-width: calc(100% - 24px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 12px 14px 10px;
+  }
+  #densita[hidden] { display: none; }
+  /* Solo colori: via icone, etichette e velo, che coprono e sporcano la mappa di calore. */
+  .leaflet-servizi-pane, .leaflet-ingressoVelo-pane, .area-label { transition: opacity 160ms ease-out, visibility 160ms; }
+  .leaflet-densita-pane img { transition: opacity 200ms ease-out; }
+  body.den-on.den-solo .leaflet-servizi-pane,
+  body.den-on.den-solo .leaflet-ingressoVelo-pane,
+  body.den-on.den-solo .area-label { opacity: 0; visibility: hidden; }
+  #densita .cop-piede { column-gap: 12px; }
+  #densita .cop-piede button { white-space: nowrap; border-radius: 4px; }
+  #densita .cop-piede button:focus-visible { outline: 2px solid var(--amaranto); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    #densita .cop-piede button { transition: transform 120ms ease-out, color 120ms ease; }
+    #densita .cop-piede button:active { transform: scale(0.96); }
+  }
+  #densita.spento .den-solo-btn { display: none; }
+  /* Con un servizio o un punto scelto: resta solo la scala dei colori (desktop). */
+  @media (min-width: 720px) {
+    body.q15-on #densita:not(.spento) > :not(.den-scala):not(.den-estremi),
+    body.aree15-on #densita:not(.spento) > :not(.den-scala):not(.den-estremi) { display: none; }
+    body.q15-on #densita:not(.spento),
+    body.aree15-on #densita:not(.spento) { width: 236px; padding: 9px 12px 6px; }
+  }
+  /* Con la scheda d'area aperta (desktop) la legenda sta accanto alla scheda, ridotta all'essenziale. */
+  @media (min-width: 720px) {
+    #map-wrap:has(#info-panel.visible) #densita { left: var(--den-scheda, 314px); bottom: 72px; width: 236px; max-width: calc(100% - var(--den-scheda, 314px) - 12px); padding: 9px 12px 6px; }
+    #map-wrap:has(#info-panel.visible) #densita .cop-eyebrow,
+    #map-wrap:has(#info-panel.visible) #densita h2,
+    #map-wrap:has(#info-panel.visible) #densita .den-aiuto,
+    #map-wrap:has(#info-panel.visible) #densita .cop-come,
+    #map-wrap:has(#info-panel.visible) #densita .cop-come-btn { display: none; }
+    #map-wrap:has(#info-panel.visible) #densita .cop-piede { margin-top: 5px; padding-top: 3px; }
+  }
+  #densita .cop-eyebrow { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amaranto); }
+  #densita h2 { margin: 3px 0 8px; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
+  .den-scala { display: flex; gap: 2px; }
+  .den-classe { flex: 1 1 0; min-width: 0; font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .den-classe i { display: block; height: 12px; margin-bottom: 3px; }
+  .den-classe:first-child i { border-radius: 3px 0 0 3px; }
+  .den-classe:last-child i { border-radius: 0 3px 3px 0; }
+  .den-estremi { display: flex; justify-content: space-between; margin: 1px 0 0; font-size: 11px; color: var(--muted); }
+  .den-qui { margin: 8px 0 0; min-height: 2.8em; text-wrap: pretty; font-size: 12.5px; line-height: 1.4; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .den-qui b { color: var(--ink); }
+  .den-aiuto { text-wrap: pretty; margin: 4px 0 0; font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+  #densita.spento { padding: 6px 8px 6px 14px; }
+  #densita.spento > :not(.cop-piede) { display: none; }
+  #densita.spento .cop-piede { margin: 0; padding: 0; border: none; }
+  #densita .cop-mostra { display: none; color: var(--amaranto); }
+  #densita.spento .cop-mostra { display: inline; }
+  #densita.spento .cop-nascondi, #densita.spento .cop-come-btn { display: none; }
   #copertura {
     position: absolute; left: 12px; bottom: 32px; z-index: 1000; width: 268px; max-width: calc(100% - 24px);
     background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
@@ -1404,6 +1462,10 @@
     #barra-mappa { gap: 6px; }
     #cerca-mappa #search { padding-left: 34px; background-position: 11px 50%; }
     #barra-mappa > #vista-dd button { padding: 0 9px; }
+  }
+  @media (max-width: 719.98px) {
+    #livelli-foglio #densita { position: static; width: auto; max-width: none; border: none; box-shadow: none; background: none; padding: 0; }
+    #livelli-densita:empty, #livelli-densita:has(> #densita[hidden]) { display: none; }
   }
   /* Copertura dei 15 minuti su telefono: la legenda vive nel foglio Livelli, sulla mappa
      resta una striscia in cima al cartiglio che apre il foglio. */
@@ -2010,6 +2072,7 @@
       <div class="foglio-testa"><span class="foglio-titolo">Livelli</span><button type="button" class="foglio-chiudi" id="livelli-chiudi" aria-label="Chiudi">&times;</button></div>
       <div class="foglio-corpo">
         <div class="lv-sez" id="livelli-copertura"></div>
+        <div class="lv-sez" id="livelli-densita"></div>
         <div class="lv-sez" id="livelli-municipi"><span class="field-label">Municipi</span></div>
         <div class="lv-sez" id="livelli-tipi"></div>
         <div class="lv-sez" id="livelli-q15-sez"><button type="button" id="livelli-q15"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4" r="2"/><path d="M10 22l2-6 3 3v3"/><path d="M8 12l2-4 4 1 2 4 3 1"/><path d="M10 8l-1 7"/></svg>A piedi in 15 minuti da un punto</button></div>
@@ -2032,6 +2095,17 @@
       <div class="cop-conta" id="cop-conta" role="group" aria-label="Quali servizi contare"></div>
       <p class="cop-come" id="cop-come" hidden>Esagoni di 250 metri dove abitano almeno 50 persone (stima GHS-POP 2025, Commissione europea). Per ognuno il tempo a piedi, a 4,8 km/h sulle strade di OpenStreetMap, fino al nido, alla scuola dell'infanzia, primaria e media, alla farmacia e al parco pi&ugrave; vicini. Case della Comunit&agrave; e pronto soccorso sono pochi per tutta la citt&agrave;: non colorano la mappa, li trovi toccando una zona. Tempi indicativi.</p>
       <div class="cop-piede"><button type="button" class="cop-nascondi" id="cop-nascondi">Nascondi</button><button type="button" class="cop-come-btn" id="cop-come-btn" aria-expanded="false" aria-controls="cop-come">Come si calcola</button><button type="button" class="cop-mostra" id="cop-mostra">Mostra dove mancano servizi a 15 minuti</button></div>
+    </div>
+
+    <div id="densita" role="region" aria-label="Quanti servizi si raggiungono a piedi in 15 minuti" hidden>
+      <span class="cop-eyebrow">A piedi in 15 minuti</span>
+      <h2>Quanti servizi hai vicino</h2>
+      <div class="den-scala" id="den-scala" aria-hidden="true"></div>
+      <p class="den-estremi"><span>Pochi</span><span>Molti</span></p>
+      <p class="den-qui" id="den-qui" aria-live="polite">Passa sulla mappa per leggere il numero.</p>
+      <p class="den-aiuto">Tocca un servizio per vedere dove arriva a piedi in 15 minuti.</p>
+      <p class="cop-come" id="den-come" hidden>Esagoni di 250 metri dove abitano almeno 50 persone (stima GHS-POP 2025, Commissione europea). Per ognuno contiamo i servizi attivi della mappa raggiungibili a piedi in 15 minuti, a 4,8 km/h sulle strade di OpenStreetMap: il valore è la mediana di sette punti dell'esagono. Ogni servizio vale uno, che sia un parco o un ospedale. Ogni colore raccoglie circa gli stessi residenti. Valori indicativi.</p>
+      <div class="cop-piede"><button type="button" class="cop-nascondi" id="den-nascondi">Nascondi</button><button type="button" class="den-solo-btn" id="den-solo" aria-pressed="false">Solo colori</button><button type="button" class="cop-come-btn" id="den-come-btn" aria-expanded="false" aria-controls="den-come">Come si calcola</button><button type="button" class="cop-mostra" id="den-mostra">Mostra quanti servizi hai vicino</button></div>
     </div>
 
     <div id="servizi-panel" hidden>
@@ -4002,6 +4076,26 @@
     return out;
   }
 
+  // Le strade entro L metri, tagliate dove il cammino finisce.
+  function q15Linee(archi, start, dist, L) {
+    var se = start.ed, linee = [];
+    archi.forEach(function (ed) {
+      var da = dist.has(ed.a) ? dist.get(ed.a) : Infinity, db = dist.has(ed.b) ? dist.get(ed.b) : Infinity;
+      var x1 = Math.max(0, L - da), x2 = Math.max(0, L - db);
+      if (ed === se) {
+        var r = L - start.d;
+        if (r > 0) linee.push(q15Tratto(ed, Math.max(0, start.s - r), Math.min(ed.len, start.s + r)));
+      }
+      if (!x1 && !x2) return;
+      if (x1 + x2 >= ed.len) linee.push(ed.pts);
+      else {
+        if (x1) linee.push(q15Tratto(ed, 0, x1));
+        if (x2) linee.push(q15Tratto(ed, ed.len - x2, ed.len));
+      }
+    });
+    return linee;
+  }
+
   function q15Calcola(ll, inquadra) {
     var gen = ++q15.gen;
     q15MostraPannello('<p class="q15-msg">Calcolo le strade che raggiungi a piedi…</p>');
@@ -4025,25 +4119,13 @@
         return t + ag.d;
       }
 
-      // Le strade entro 15 minuti, tagliate dove il cammino finisce.
-      var linee = [];
-      archi.forEach(function (ed) {
-        var da = dist.has(ed.a) ? dist.get(ed.a) : Infinity, db = dist.has(ed.b) ? dist.get(ed.b) : Infinity;
-        var x1 = Math.max(0, L15 - da), x2 = Math.max(0, L15 - db);
-        if (ed === se) {
-          var r = L15 - start.d;
-          if (r > 0) linee.push(q15Tratto(ed, Math.max(0, start.s - r), Math.min(ed.len, start.s + r)));
-        }
-        if (!x1 && !x2) return;
-        if (x1 + x2 >= ed.len) linee.push(ed.pts);
-        else {
-          if (x1) linee.push(q15Tratto(ed, 0, x1));
-          if (x2) linee.push(q15Tratto(ed, ed.len - x2, ed.len));
-        }
-      });
-      // Alone largo (la "macchia" dei 15 minuti) e strade sottili sopra.
-      L.polyline(linee, { renderer: q15Renderer, color: AMARANTO, weight: 26, opacity: 0.2, lineCap: "round", lineJoin: "round", interactive: false }).addTo(q15ReteLayer);
-      var nucleo = L.polyline(linee, { renderer: q15Renderer, color: AMARANTO, weight: 1.6, opacity: 0.7, lineCap: "round", lineJoin: "round", interactive: false }).addTo(q15ReteLayer);
+      var linee = q15Linee(archi, start, dist, L15);
+      // Sopra la mappa di calore solo strade sottili, blu su un bordo bianco: l'alone la
+      // coprirebbe. Senza mappa di calore, alone largo (la "macchia") e strade sottili sopra.
+      var sopraCalore = !!den.dati && den.acceso;
+      if (sopraCalore) L.polyline(linee, { renderer: q15Renderer, color: "#FFFFFF", weight: 3.6, opacity: 0.85, lineCap: "round", lineJoin: "round", interactive: false }).addTo(q15ReteLayer);
+      else L.polyline(linee, { renderer: q15Renderer, color: AMARANTO, weight: 26, opacity: 0.2, lineCap: "round", lineJoin: "round", interactive: false }).addTo(q15ReteLayer);
+      var nucleo = L.polyline(linee, { renderer: q15Renderer, color: sopraCalore ? AREE15_COLORE : AMARANTO, weight: sopraCalore ? 1.8 : 1.6, opacity: sopraCalore ? 1 : 0.7, lineCap: "round", lineJoin: "round", interactive: false }).addTo(q15ReteLayer);
 
       // Il cammino non e' mai piu' corto della linea d'aria: si aggancia alla rete solo
       // cio' che puo' stare entro 15 minuti; per le categorie senza niente entro 15 si
@@ -4348,6 +4430,179 @@
   registraStrato(50, function () { return q15.attivo && !tourAttivo(); }, function () { q15Disattiva(); });
 
   // ====================================================================
+  // Area di un servizio: un clic su un servizio (2D) mostra l'area che si raggiunge a piedi in
+  // 15 minuti da li', sulle strade vere, con lo stesso calcolo dei 15 minuti. Un altro servizio
+  // la sostituisce, la chiusura della scheda la toglie. Coi 15 minuti accesi il clic apre solo
+  // la scheda.
+  // ====================================================================
+  var AREE15_COLORE = "#1D4ED8";
+  var aree15 = { lista: [], strato: L.layerGroup().addTo(map) };
+  var aree15Renderer = L.canvas({ pane: "q15Pane", padding: 0.1 });
+  function aree15Mostra() {
+    document.body.classList.toggle("aree15-on", aree15.lista.length > 0);
+  }
+  function aree15Togli(a) {
+    aree15.strato.removeLayer(a.gruppo);
+    aree15.lista.splice(aree15.lista.indexOf(a), 1);
+    aree15Mostra();
+  }
+  // Basta l'indice dei riquadri: q15CaricaBasi riscarica anche i servizi e ridisegna le icone,
+  // e la scheda appena aperta da un grappolo perderebbe la sua e si chiuderebbe.
+  function aree15Indice() {
+    if (!aree15.indice) {
+      aree15.indice = q15Json(conVersione("rete/indice.json", "rete")).then(function (d) {
+        var presenti = {};
+        d.riquadri.forEach(function (k) { presenti[k] = true; });
+        q15.indice = d;
+        q15.presenti = presenti;
+      }).catch(function (e) { aree15.indice = null; throw e; });
+    }
+    return aree15.indice;
+  }
+  function aree15Clic(props, ll) {
+    if (!VERSIONI.rete || q15.attivo || tourAttivo() || presentazioneOn) return;
+    var chiave = props.categoria + "|" + ll.lat + "|" + ll.lng;
+    var gia = aree15.lista.filter(function (x) { return x.chiave === chiave; })[0];
+    if (gia) return;
+    aree15Svuota();
+    var a = { chiave: chiave, gruppo: L.layerGroup().addTo(aree15.strato) };
+    aree15.lista.push(a);
+    aree15Mostra();
+    function fallita(testo) {
+      if (aree15.lista.indexOf(a) < 0) return;
+      aree15Togli(a);
+      avviso(testo);
+    }
+    var L15 = Q15_MIN * Q15_VEL;
+    aree15Indice().then(function () {
+      return Promise.all(q15RiquadriAttorno(ll.lat, ll.lng, L15 + 500).map(q15Riquadro));
+    }).then(function (liste) {
+      if (aree15.lista.indexOf(a) < 0) return;
+      var archi = [].concat.apply([], liste);
+      var start = archi.length ? q15Aggancia(archi, ll.lat, ll.lng) : null;
+      if (!start || start.d > 400) { fallita("Nessuna strada vicina a questo servizio."); return; }
+      var se = start.ed, dist = q15Distanze(archi, [[se.a, start.d + start.s], [se.b, start.d + se.len - start.s]], L15);
+      var linee = q15Linee(archi, start, dist, L15);
+      L.polyline(linee, { renderer: aree15Renderer, pane: "q15Pane", color: "#FFFFFF", weight: 3.6, opacity: 0.85, lineCap: "round", lineJoin: "round", interactive: false }).addTo(a.gruppo);
+      L.polyline(linee, { renderer: aree15Renderer, pane: "q15Pane", color: AREE15_COLORE, weight: 1.8, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }).addTo(a.gruppo);
+    }).catch(function () { fallita("I dati per il calcolo a piedi non si sono caricati. Riprova più tardi."); });
+  }
+  function aree15Svuota() { aree15.lista.slice().forEach(aree15Togli); }
+
+  // ====================================================================
+  // Mappa di calore: quanti servizi attivi si raggiungono a piedi in 15 minuti da ogni
+  // esagono abitato di 250 m (densita/densita.json, da prepara_densita_15_minuti.py), dal
+  // viola scuro (pochi) al pesca chiaro (molti). Le classi hanno circa gli stessi abitanti. Sta in 2D,
+  // sotto il velo del municipio; coi 15 minuti accesi resta; si spegne in 3D. Con la copertura
+  // accesa (COPERTURA_NEL_RILASCIO) non parte: le due legende occupano lo stesso posto.
+  // ====================================================================
+  // Dallo scuro (pochi) al chiaro (molti): la luminosita' sale sempre, quindi si legge anche con
+  // il daltonismo. Niente rosso-verde: per un deuteranope i due estremi quasi coincidono.
+  var DEN_COLORI = ["#2C115F", "#5B167E", "#8C2981", "#B73779", "#DE4968", "#F8765C", "#FEB078"];
+  var den = { dati: null, idx: null, strato: null, acceso: true };
+  var denEl = document.getElementById("densita"), denQui = document.getElementById("den-qui");
+  map.createPane("densitaPane");
+  map.getPane("densitaPane").style.zIndex = 401;
+  map.getPane("densitaPane").style.pointerEvents = "none";
+
+  function denColore(k, n) { return DEN_COLORI[n > 1 ? Math.round(k * (DEN_COLORI.length - 1) / (n - 1)) : 0]; }
+  function denClasse(c) {
+    var k = 0;
+    while (k + 1 < den.dati.classi.length && c >= den.dati.classi[k + 1]) k++;
+    return k;
+  }
+  // Gli esagoni si disegnano una volta sola in un'immagine fissa: un canvas vivo sopra la mappa
+  // rompeva la composizione di Chrome (schede senza sfondo, blocchi vuoti). Il disegno usa la
+  // proiezione della mappa, cosi' l'immagine resta allineata a ogni zoom.
+  function denImmagine(anelli, n) {
+    var crs = L.CRS.EPSG3857, sud = 90, ovest = 180, nord = -90, est = -180;
+    anelli.forEach(function (a) {
+      a.forEach(function (es) {
+        es[0].forEach(function (p) {
+          if (p[0] < sud) sud = p[0]; if (p[0] > nord) nord = p[0];
+          if (p[1] < ovest) ovest = p[1]; if (p[1] > est) est = p[1];
+        });
+      });
+    });
+    var so = crs.project(L.latLng(sud, ovest)), ne = crs.project(L.latLng(nord, est));
+    var larghezza = 4096, k = larghezza / (ne.x - so.x);
+    var tela = document.createElement("canvas");
+    tela.width = larghezza;
+    tela.height = Math.ceil((ne.y - so.y) * k);
+    var ctx = tela.getContext("2d");
+    ctx.globalAlpha = 0.58;
+    anelli.forEach(function (a, c) {
+      ctx.fillStyle = denColore(c, n);
+      ctx.beginPath();
+      a.forEach(function (es) {
+        es[0].forEach(function (p, i) {
+          var q = crs.project(L.latLng(p[0], p[1])), x = (q.x - so.x) * k, y = (ne.y - q.y) * k;
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        });
+        ctx.closePath();
+      });
+      ctx.fill();
+    });
+    return L.imageOverlay(tela.toDataURL("image/png"), [[sud, ovest], [nord, est]], { pane: "densitaPane", interactive: false });
+  }
+  function denCarica() {
+    if (!VERSIONI.densita || VERSIONI.copertura) return;
+    fetch(conVersione("densita/densita.json", "densita")).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (d) {
+      den.dati = d; den.idx = new Map();
+      var n = d.classi.length, anelli = d.classi.map(function () { return []; });
+      for (var i = 0; i < d.celle.length; i += 4) {
+        den.idx.set(d.celle[i] + "," + d.celle[i + 1], d.celle[i + 3]);
+        anelli[denClasse(d.celle[i + 3])].push([esagonoAnello(d.esagono, d.celle[i], d.celle[i + 1])]);
+      }
+      den.strato = denImmagine(anelli, n);
+      document.getElementById("den-scala").innerHTML = d.classi.map(function (lim, k) {
+        return '<span class="den-classe"><i style="background:' + denColore(k, n) + '"></i>' + formattaNumero(lim) + (k === n - 1 ? "+" : "") + "</span>";
+      }).join("");
+      denAggiorna();
+    }).catch(function () { den.dati = null; });
+  }
+  function denAggiorna() {
+    if (!den.dati) return;
+    var b = document.body, ok = !presentazioneOn && !b.classList.contains("vista-3d-on"), su = ok && den.acceso;
+    if (su !== map.hasLayer(den.strato)) { if (su) den.strato.addTo(map); else map.removeLayer(den.strato); }
+    if (b.classList.contains("den-on") !== su) b.classList.toggle("den-on", su);
+    denEl.hidden = !ok;
+    denEl.classList.toggle("spento", !den.acceso);
+  }
+  // Il numero dell'esagono sotto il mouse, o sotto il tocco, nella legenda.
+  function denSegna(ev) {
+    if (!den.dati || !map.hasLayer(den.strato)) return;
+    var c = den.idx.get(esagonoQR(den.dati.esagono, ev.latlng));
+    denQui.innerHTML = c === undefined ? "Qui abitano meno di 50 persone: zona senza colore." :
+      "Qui: <b>" + formattaNumero(c) + (c === 1 ? " servizio" : " servizi") + "</b> entro 15 minuti a piedi";
+  }
+  map.on("mousemove click", denSegna);
+  document.getElementById("den-nascondi").addEventListener("click", function () {
+    den.acceso = false; denAggiorna();
+    focalizzaPoi(document.getElementById("den-mostra"));
+  });
+  document.getElementById("den-mostra").addEventListener("click", function () {
+    den.acceso = true; denAggiorna();
+    focalizzaPoi(document.getElementById("den-nascondi"));
+  });
+  document.getElementById("den-solo").addEventListener("click", function () {
+    var su = !document.body.classList.contains("den-solo");
+    document.body.classList.toggle("den-solo", su);
+    this.setAttribute("aria-pressed", String(su));
+    this.textContent = su ? "Mostra tutto" : "Solo colori";
+    if (su && schedaSrv.aperta) chiudiSchedaServizio();   // la sua icona non si vede piu'
+  });
+  document.getElementById("den-come-btn").addEventListener("click", function () {
+    var come = document.getElementById("den-come"), su = come.hidden;
+    come.hidden = !su;
+    this.setAttribute("aria-expanded", String(su));
+  });
+  new MutationObserver(denAggiorna).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+  // ====================================================================
   // Prima vista: dove i servizi essenziali NON sono a 15 minuti a piedi.
   // Esagoni abitati di 250 m (copertura/copertura.json, da prepara_copertura_15_minuti.py)
   // coi minuti a piedi fino al nido, all'infanzia, alla primaria, alla media, alla farmacia
@@ -4367,8 +4622,9 @@
   map.getPane("coperturaPane").style.pointerEvents = "none";
   var copRenderer = L.canvas({ pane: "coperturaPane", padding: 0.3 });
 
-  function copEsagono(q, r) {
-    var e = cop.dati.esagono, x = e.lato * Math.sqrt(3) * (q + r / 2), y = e.lato * 1.5 * r, out = [];
+  function copEsagono(q, r) { return esagonoAnello(cop.dati.esagono, q, r); }
+  function esagonoAnello(e, q, r) {
+    var x = e.lato * Math.sqrt(3) * (q + r / 2), y = e.lato * 1.5 * r, out = [];
     for (var k = 0; k < 6; k++) {
       var a = Math.PI / 180 * (60 * k - 30);
       out.push([e.lat0 + (y + e.lato * Math.sin(a)) / e.ky, e.lon0 + (x + e.lato * Math.cos(a)) / e.kx]);
@@ -4376,8 +4632,9 @@
     return out;
   }
   // Coordinate assiali dell'esagono (a punta in alto) che contiene il punto: come esagono_di nello script.
-  function copQR(ll) {
-    var e = cop.dati.esagono, x = (ll.lng - e.lon0) * e.kx, y = (ll.lat - e.lat0) * e.ky;
+  function copQR(ll) { return esagonoQR(cop.dati.esagono, ll); }
+  function esagonoQR(e, ll) {
+    var x = (ll.lng - e.lon0) * e.kx, y = (ll.lat - e.lat0) * e.ky;
     var qf = (Math.sqrt(3) / 3 * x - y / 3) / e.lato, rf = (2 / 3 * y) / e.lato, sf = -qf - rf;
     var q = Math.round(qf), r = Math.round(rf), s = Math.round(sf);
     var dq = Math.abs(q - qf), dr = Math.abs(r - rf), ds = Math.abs(s - sf);
@@ -4395,7 +4652,7 @@
   }
 
   function copCarica() {
-    if (!VERSIONI.copertura) { document.getElementById("fonte-copertura").hidden = true; return; }
+    if (!VERSIONI.copertura) { document.getElementById("fonte-copertura").hidden = !VERSIONI.densita; return; }
     fetch(conVersione("copertura/copertura.json", "copertura")).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
@@ -4556,6 +4813,7 @@
     [drawerToggle, "cartiglio-azioni", true],
     [legendEl, "livelli-municipi", false],
     [document.getElementById("copertura"), "livelli-copertura", false],
+    [document.getElementById("densita"), "livelli-densita", false],
     [document.getElementById("filtro-tipo"), "livelli-tipi", false]
   ].map(function (s) {
     var segno = document.createComment("");
@@ -4837,6 +5095,7 @@
   })();
   apriDaHash(leggiHash(), true);
   copCarica();
+  denCarica();
   map.whenReady(function () { setTimeout(applicaRetinoTutti, 60); });
 
   // ====================================================================
@@ -6141,6 +6400,7 @@
       document.getElementById("info-panel").classList.remove("ceduta");
       q15Panel.classList.remove("ceduto");
     }
+    aree15Svuota();
     var prec = s.prec, chiusa = s.opz && s.opz.chiusa;
     s.props = s.ll = s.ancora = s.opz = s.prec = null;
     if (chiusa) chiusa();
@@ -6219,6 +6479,7 @@
       marker.closeTooltip();
       var el = marker.getElement();
       apriSchedaServizio(punto.props, punto.latlng, el && el.firstElementChild);
+      aree15Clic(punto.props, punto.latlng);
     });
     return marker;
   }
@@ -6259,6 +6520,7 @@
         marker.closeTooltip();
         var el = marker.getElement();
         apriSchedaServizio(p.props, p.latlng, el && el.firstElementChild);
+        aree15Clic(p.props, p.latlng);
       });
     });
     marker.on("click", function () {

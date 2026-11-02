@@ -356,3 +356,24 @@ def test_template_ha_i_punti_dell_intro():
     # la scritta e' una sola, il cartello: niente parametri di prova ne' varianti
     for avanzo in ("ritmo", "?titolo", "intro-t-", "intro-lt"):
         assert avanzo not in t, avanzo
+
+
+def test_densita_in_cache_lunga():
+    sorgenti = [h["source"] for h in build.config_vercel(False)["headers"]]
+    assert "/densita/(.*)" in sorgenti
+
+
+def test_densita_riscritta_e_validata(tmp_path, monkeypatch):
+    src = tmp_path / "densita.json"
+    monkeypatch.setattr(build, "DENSITA_SRC", src)
+    monkeypatch.setattr(build, "DENSITA_OUT", tmp_path / "out" / "densita")
+    assert build.copia_densita() is None            # senza file: niente strato, build avanti
+    esagono = {"lato": 144.0, "lat0": 41.9, "lon0": 12.5, "kx": 82856.7, "ky": 110540.0}
+    src.write_text(json.dumps({"esagono": esagono, "soglia": 15, "classi": [0, 10], "celle": [1, 2, 70, 12],
+                               "extra": "non deve arrivare in dist"}), encoding="utf-8")
+    assert build.copia_densita()
+    out = json.loads((tmp_path / "out" / "densita" / "densita.json").read_text(encoding="utf-8"))
+    assert out["celle"] == [1, 2, 70, 12] and "extra" not in out
+    src.write_text(json.dumps({"esagono": esagono, "soglia": 15, "classi": [5, 10], "celle": [1, 2, 70, 12]}), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        build.copia_densita()
