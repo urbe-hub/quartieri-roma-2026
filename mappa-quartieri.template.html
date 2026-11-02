@@ -183,6 +183,7 @@
     flex: 0 0 auto;
   }
   #topbar .donor span { font-size: 11px; color: var(--faint); font-weight: 500; }
+  #topbar .donor a { display: inline-flex; }
   #topbar .donor img { height: 21px; width: auto; opacity: 0.9; }
   #amaranto-rule { height: 3px; background: var(--amaranto); flex: 0 0 auto; }
 
@@ -1949,7 +1950,7 @@
   </div>
   <div class="donor">
     <span>un progetto di</span>
-    <img src="<<URBE_LOGO>>" alt="Urbe Hub">
+    <a href="https://hub.urbe.build/"><img src="<<URBE_LOGO>>" alt="Urbe Hub"></a>
   </div>
   <div id="topbar-azioni"></div>
 </header>
@@ -3585,12 +3586,21 @@
       if (bm) { try { map.fitBounds(bm, { padding: [50, 50], maxZoom: 14, animate: !menoMoto() }); } catch (x) {} }
       return;
     }
+    tornaAllaVistaInsieme();
+  });
+  function tornaAllaVistaInsieme() {
     if (selectedLayer) deseleziona();
     searchEl.value = ""; testoRicerca = ""; aggiornaVie();
     if (municipioSelect.value) { municipioSelect.value = ""; municipioSelect.dispatchEvent(new Event("change")); }
     else { applicaFiltri(); vistaInsieme(); }
     aggiornaReset();
-  });
+  }
+  function tornaDaFuoriFocus(latlng) {
+    var focus = selectedLayer || municipioLayers[activeMunicipio];
+    if (!focus || dentroGeometria(focus.feature.geometry, latlng.lng, latlng.lat)) return false;
+    tornaAllaVistaInsieme();
+    return true;
+  }
 
   // --- Strati sovrapposti: Esc chiude solo quello in cima ---
   // Ogni strato (pannello, foglio, cassetto, 15 minuti, selezione) si registra con la sua
@@ -4344,7 +4354,11 @@
   });
   // Il punto scelto (tocco o trascinamento) si inquadra con l'area raggiungibile a piedi
   // (prima la mappa restava dov'era).
-  map.on("click", function (ev) { if (q15.attivo) q15Piazza(ev.latlng, true); });
+  map.on("click", function (ev) {
+    if (q15.attivo) q15Piazza(ev.latlng, true);
+    // I poligoni gestiscono il loro tocco prima che risalga alla mappa.
+    else if (ev.sourceTarget === map) tornaDaFuoriFocus(ev.latlng);
+  });
   registraStrato(50, function () { return q15.attivo && !tourAttivo(); }, function () { q15Disattiva(); });
 
   // ====================================================================

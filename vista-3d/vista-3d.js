@@ -2131,6 +2131,18 @@
     chiudiPopup();
     var f = map.queryRenderedFeatures(ev.point, { layers: strati() })
       .filter(function (x) { return x.properties && toccabile(x.properties.codice); })[0];
+    // Il tocco sullo sfondo torna alla citta', come Vista d'insieme.
+    // Le altre aree restano toccabili per passare direttamente da una all'altra.
+    if (!f && S.livello === "area") {
+      scegli({ tipo: "roma" });
+      return;
+    }
+    if (!f && S.livello === "municipio" && !poligoni(cache.munGeo[S.sel.arabo]).some(function (pol) {
+      return dentro(pol, ev.lngLat.lng, ev.lngLat.lat);
+    })) {
+      scegli({ tipo: "roma" });
+      return;
+    }
     if (!f) return;
     var e = cache.byCode[f.properties.codice];
     if (!e) return;
