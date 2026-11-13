@@ -7,6 +7,8 @@ data/rete-bici/
 # Estratti OSM e indirizzi grezzi: input dei prepara_*.py, non si versionano
 *.pbf
 civici_*.csv
+# Fonti grezze delle antenne (pagine, PDF, civici): si riscaricano con prepara_antenne.py --scarica
+fonti-antenne/
 # Locali
 __pycache__/
 .pytest_cache/

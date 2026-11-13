@@ -161,6 +161,14 @@ Con Global Privacy Control acceso la pagina non manda nulla, come con Do Not Tra
 
 Si contano solo i gesti veri: non la guida alla mappa, non la presentazione, non le aperture da un link o da avanti e indietro.
 
+## Antenne (beta)
+
+Una pagina a parte, `antenne/`, mostra le pratiche per antenne di telefonia mobile pubblicate dai Municipi II e V di Roma Capitale (elenchi di installazioni, modifiche, adeguamenti e dismissioni) e verifica quali luoghi sensibili (scuole, parchi e aree gioco, sanità, centri anziani) stanno vicino a ciascun sito. Si può cercare un indirizzo, scegliere un punto sulla mappa (per una nuova richiesta) e cambiare il raggio di verifica da 50 m a 1 km (all'inizio 300 m): è uno strumento di lettura, non una distanza di legge. Il regolamento di Roma Capitale del 2024 (deliberazione A.C. n. 78/2024, art. 4) vieta l'installazione sui siti sensibili e sulle loro pertinenze, non entro un raggio. Sono pratiche pubblicate, non un censimento degli impianti attivi.
+
+I dati stanno in `data/antenne/` (`antenne.json` e `civici.json`, da `prepara_antenne.py`) e la pagina è `antenne.template.html`, autoportante come l'altra: il build la scrive in `dist/antenne/index.html` e copia accanto i due file di dati, che passano dal controllo zero-footprint e si caricano con `?v=<hash>`. I luoghi sensibili si leggono da `dist/servizi/servizi.json`. La pagina segue noindex e produzione come la mappa dei quartieri. La mappa dei quartieri non ha collegamenti alle antenne: la pagina si apre dal suo indirizzo, `/antenne/`.
+
+In `build.py`, `ANTENNE_NEL_RILASCIO = False` spegne tutto: niente pagina `dist/antenne/`. Anche senza i dati la build non si ferma: esce senza antenne e lo dice. Link condivisibili: `#sito=<id>`, `#punto=lat,lon`, con `&r=<metri>` se il raggio non è quello iniziale.
+
 ## Dati e rigenerazione
 
 I dati sono già pronti in `data/`: confini di quartieri e municipi, stradario, servizi, scuole e presidi. Il build usa solo quei file.
@@ -205,6 +213,7 @@ Un clic o un tocco su un'icona dei servizi, o su una voce dell'elenco di un grap
 ```
 build.py                         builder: inlina dati, Leaflet, font e logo, esegue il controllo finale
 mappa-quartieri.template.html    template unico (veste e logica della mappa)
+antenne.template.html            pagina Antenne (beta), autoportante
 vista-3d/                        modulo della vista 3D e aggancio alla 2D
 vendor/                          Leaflet, MapLibre GL, font Montserrat, con le rispettive licenze
 brand/                           logo Urbe Hub e immagine per i social (esclusi dalla licenza MIT)
@@ -214,6 +223,9 @@ check_zero_footprint.py          controllo sul bundle, eseguito dal build
 test_build.py                    test del build
 test_zero_footprint.py           test del controllo
 test_accorpamento.py             test dei servizi doppi
+test_antenne.py                  test dei dati delle antenne
+test_build_antenne.py            test della pagina Antenne nel build
+prepara_antenne.py               pratiche dei Municipi II e V e civici per la pagina Antenne
 importa_dati.py                  confini e stradario, da WFS di Roma Capitale
 importa_servizi.py               Piano dei Servizi, unito a scuole e presidi
 prepara_scuole.py                scuole e nidi (con --dettagli per le schede)

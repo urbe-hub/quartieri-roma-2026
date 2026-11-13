@@ -30,6 +30,10 @@ Consuma SOLO input dentro questa cartella:
                                              esagono abitato, prima vista della 2D:
                                              prepara_copertura_15_minuti.py; copiato
                                              accanto al bundle; senza, niente strato)
+  - data/antenne/                           (antenne.json e civici.json da prepara_antenne.py, con
+                                             antenne.template.html: pagina dist/antenne/, beta;
+                                             senza i dati o con ANTENNE_NEL_RILASCIO spento
+                                             la build esce senza)
   - icone/*.svg                             (icone dei servizi, tessere da app con
                                              l'illustrazione centrata: inlinate nel bundle,
                                              una per categoria, vedi CATEGORIA_ICONA; si
@@ -114,6 +118,16 @@ COPERTURA_NEL_RILASCIO = False
 # dist/servizi-15-minuti.json non esiste piu' (si toglie se e' rimasto li').
 QUINDICI_VECCHIO_OUT = DIST_DIR / "servizi-15-minuti.json"
 VERCEL_OUT = DIST_DIR / "vercel.json"
+# Antenne (beta): pagina dedicata dist/antenne/index.html con i due file di dati accanto
+# (prepara_antenne.py). Spenta con False, o senza i dati: la build esce come prima, senza
+# pagina. La mappa dei quartieri non la collega: la pagina si apre dal suo indirizzo /antenne/.
+ANTENNE_NEL_RILASCIO = True
+ANTENNE_TEMPLATE_PATH = SCRIPT_DIR / "antenne.template.html"
+ANTENNE_SRC = SCRIPT_DIR / "data" / "antenne"
+ANTENNE_OUT = DIST_DIR / "antenne"
+MARKER_MUNICIPI_ANTENNE = "/*<<MUNICIPI_II_V>>*/"
+MARKER_ICONA = "<!--<<ICONA>>-->"
+MUNICIPI_ANTENNE = ("II", "V")
 # Vista 3D: MapLibre vendorizzato + il modulo, copiati in dist/3d/ e scaricati dalla
 # mappa solo al primo "3D"; il tasto e il contratto con la 2D (aggancio) si inlinano.
 VISTA3D_SRC = SCRIPT_DIR / "vista-3d"
@@ -556,6 +570,12 @@ def config_vercel(produzione=False):
             {"source": "/copertura/(.*)", "headers": immutabile},
             {"source": "/servizi/(.*)", "headers": immutabile},
             {"source": "/3d/(.*)", "headers": immutabile},
+            # Antenne (beta): la pagina si rivalida sempre, i due file di dati hanno ?v=<hash>.
+            {"source": "/antenne", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]},
+            {"source": "/antenne/", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]},
+            {"source": "/antenne/index.html", "headers": [{"key": "Cache-Control", "value": "public, max-age=0, must-revalidate"}]},
+            {"source": "/antenne/antenne.json", "headers": immutabile},
+            {"source": "/antenne/civici.json", "headers": immutabile},
         ]
     }
 
@@ -866,6 +886,128 @@ def copia_copertura():
     return hash_corto([f])
 
 
+def anelli_municipi(municipi_geojson, romani=MUNICIPI_ANTENNE):
+    # Solo il contorno esterno dei municipi che servono (II e V), come [lat, lon] a 5 decimali.
+    out = {}
+    for f in municipi_geojson["features"]:
+        romano = (f.get("properties") or {}).get("romano")
+        if romano not in romani:
+            continue
+        g = f["geometry"]
+        poligoni = [g["coordinates"]] if g["type"] == "Polygon" else g["coordinates"]
+        anello = max((pol[0] for pol in poligoni), key=len)
+        out[romano] = {"anello": [[round(c[1], 5), round(c[0], 5)] for c in anello]}
+    mancanti = [r for r in romani if r not in out]
+    if mancanti:
+        raise SystemExit("Errore: municipi mancanti per le antenne: " + ", ".join(mancanti) + ".")
+    return out
+
+
+def icona_e_colore(template_principale):
+    # L'icona del browser e il colore della barra sono quelli della mappa dei quartieri: si prendono dal suo
+    # template (un solo punto da cambiare), cosi' le due pagine non possono divergere.
+    link = re.search(r'<link rel="icon"[^>]*>', template_principale)
+    colore = re.search(r'<meta name="theme-color"[^>]*>', template_principale)
+    if not (link and colore):
+        raise SystemExit("Errore: icona o theme-color non trovati in " + TEMPLATE_PATH.name + ".")
+    return link.group(0) + "\n" + colore.group(0)
+
+
+def valida_antenne(d):
+    # Controlli di struttura sul file dei dati: chiavi, tipi, riferimenti fra siti e pratiche.
+    def errore(perche):
+        raise SystemExit("Errore: antenne.json non valido (" + perche + ").")
+    for k in ("generato", "raggio_m", "avvertenza", "gruppi_sensibili", "fonti", "siti", "pratiche", "controlli"):
+        if k not in d:
+            errore("manca " + k)
+    if not isinstance(d["raggio_m"], int) or not 50 <= d["raggio_m"] <= 1000:
+        errore("raggio_m")
+    ids_p = {p["id"] for p in d["pratiche"]}
+    ids_s = set()
+    for s in d["siti"]:
+        for k in ("id", "municipio", "indirizzo", "lat", "lon", "qualita", "gestori", "pratiche", "stato", "vicini", "vicino_min_m"):
+            if k not in s:
+                errore("sito senza " + k)
+        if s["id"] in ids_s:
+            errore("sito doppio " + s["id"])
+        ids_s.add(s["id"])
+        if s["stato"] not in ("esistente", "nuova_richiesta", "dismissione_richiesta"):
+            errore("stato " + str(s["stato"]))
+        if not (41 < s["lat"] < 43 and 11.5 < s["lon"] < 13.5):
+            errore("coordinate fuori Roma in " + s["id"])
+        if any(i not in ids_p for i in s["pratiche"]):
+            errore("pratica mancante in " + s["id"])
+    fonti = {f["id"] for f in d["fonti"]}
+    for p in d["pratiche"]:
+        if p["fonte"]["id"] not in fonti or (p.get("sito") and p["sito"] not in ids_s):
+            errore("riferimento rotto in " + p["id"])
+    return d
+
+
+def valida_civici(d):
+    try:
+        vie = [[str(n), str(m), [[str(c[0]), round(float(c[1]), 5), round(float(c[2]), 5)] for c in civ]] for n, m, civ in d["vie"]]
+    except (KeyError, TypeError, ValueError, IndexError) as exc:
+        raise SystemExit("Errore: civici.json non valido (" + str(exc) + ").")
+    if not vie:
+        raise SystemExit("Errore: civici.json senza vie.")
+    return {"vie": vie}
+
+
+def copia_antenne(produzione, municipi_geojson, icone_servizi, urbe_logo, hash_servizi):
+    # Pagina delle antenne (beta). Con l'interruttore spento o senza i dati non si ferma e non
+    # scrive niente (dist/antenne/ si toglie se c'era): ritorna None e la mappa dei quartieri
+    # esce senza pagina. I due file di dati passano dal gate, e la pagina porta gli hash per ?v=.
+    if ANTENNE_OUT.exists():
+        shutil.rmtree(ANTENNE_OUT)
+    if not ANTENNE_NEL_RILASCIO:
+        print("Antenne spente (ANTENNE_NEL_RILASCIO): niente pagina dist/antenne/.")
+        return None
+    src_a, src_c = ANTENNE_SRC / "antenne.json", ANTENNE_SRC / "civici.json"
+    if not (src_a.exists() and src_c.exists()):
+        print("ATTENZIONE: mancano i dati in " + str(ANTENNE_SRC) + " (python3 prepara_antenne.py): la build esce senza antenne.")
+        return None
+    try:
+        antenne = valida_antenne(json.loads(src_a.read_text(encoding="utf-8")))
+        civici = valida_civici(json.loads(src_c.read_text(encoding="utf-8")))
+    except json.JSONDecodeError as exc:
+        raise SystemExit("Errore: dati delle antenne non validi (" + str(exc) + ").")
+    template = leggi_input_obbligatorio(ANTENNE_TEMPLATE_PATH)
+    marker = (MARKER_FONTS_CSS, MARKER_LEAFLET_CSS, MARKER_LEAFLET_JS, MARKER_MUNICIPI_ANTENNE, MARKER_URBE_LOGO,
+              MARKER_ICONE_SERVIZI, MARKER_VERSIONI, MARKER_ICONA)
+    for m in marker + (META_NOINDEX,):
+        if template.count(m) != 1:
+            raise SystemExit("Errore: " + m + " atteso 1 volta, trovato " + str(template.count(m)) + " in " + ANTENNE_TEMPLATE_PATH.name + ".")
+    ANTENNE_OUT.mkdir(parents=True)
+    out_a, out_c = ANTENNE_OUT / "antenne.json", ANTENNE_OUT / "civici.json"
+    out_a.write_text(dump_json_sicuro(antenne), encoding="utf-8")
+    out_c.write_text(dump_json_sicuro(civici), encoding="utf-8")
+    for f in (out_a, out_c):
+        if check_zero_footprint(f, strade=True, servizi=True) != 0:
+            raise SystemExit("Errore: il gate ha trovato footprint in " + str(f) + ". Build FALLITA.")
+    versioni = {"antenne": hash_corto([out_a]), "civici": hash_corto([out_c]), "servizi": hash_servizi}
+    categorie = sorted({c for cats in antenne["gruppi_sensibili"].values() for c in cats})
+    mancanti = [c for c in categorie if c not in icone_servizi]
+    if mancanti:
+        raise SystemExit("Errore: categorie sensibili senza icona: " + ", ".join(mancanti) + ".")
+    html = senza_noindex(template) if produzione else template
+    html = html.replace(MARKER_ICONA, icona_e_colore(leggi_input_obbligatorio(TEMPLATE_PATH)))
+    html = html.replace(MARKER_FONTS_CSS, costruisci_fonts_css())
+    html = html.replace(MARKER_LEAFLET_CSS, leggi_input_obbligatorio(LEAFLET_CSS_PATH))
+    html = html.replace(MARKER_LEAFLET_JS, escava_chiusura_script(leggi_input_obbligatorio(LEAFLET_JS_PATH)))
+    html = html.replace(MARKER_MUNICIPI_ANTENNE, dump_json_sicuro(anelli_municipi(municipi_geojson)))
+    html = html.replace(MARKER_ICONE_SERVIZI, dump_json_sicuro({c: icone_servizi[c] for c in categorie}))
+    html = html.replace(MARKER_VERSIONI, dump_json_sicuro(versioni))
+    html = html.replace(MARKER_URBE_LOGO, urbe_logo)
+    page = ANTENNE_OUT / "index.html"
+    page.write_text(html, encoding="utf-8")
+    if check_zero_footprint(page) != 0:
+        raise SystemExit("Errore: il gate ha trovato footprint in " + str(page) + ". Build FALLITA.")
+    print("Antenne (beta): " + str(len(antenne["siti"])) + " siti, " + str(len(antenne["pratiche"]))
+          + " pratiche, " + str(len(civici["vie"])) + " vie, gate OK su 3 file.")
+    return versioni
+
+
 def copia_vista_3d():
     # MapLibre GL 4.7.1 (BSD-3, licenza accanto) e il modulo della vista 3D. Il gate passa
     # su ogni file. Nel MapLibre minificato quattro accessi "p.d" (polylabel) possono
@@ -944,6 +1086,7 @@ def main(argv=None):
         "copertura": copia_copertura(),
         "3d": copia_vista_3d(),
     }
+    copia_antenne(produzione, municipi_geojson, icone_servizi, urbe_logo, versioni["servizi"])
     scrivi_vercel_json(produzione)
     copia_licenze_e_og()
 
