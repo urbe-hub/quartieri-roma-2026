@@ -389,7 +389,7 @@
   #info-panel .via .vq button.on { background: var(--amaranto); border-color: var(--amaranto); color: #fff; }
   /* Su telefono, con una via aperta, la scheda cede spazio alla mappa: via la quota. */
   @media (max-width: 720px), (max-height: 500px) and (pointer: coarse) {
-    #info-panel.con-via .share { display: none; }
+    #info-panel.con-via .share, #info-panel.con-via #info-cifre { display: none; }
     /* Le aree della via su una riga sola che scorre in orizzontale: la scheda resta bassa. */
     #info-panel .via .vq {
       flex-wrap: nowrap; overflow-x: auto; max-height: none; overscroll-behavior: contain;
@@ -449,6 +449,20 @@
   #info-servizi .is-line b { color: var(--amaranto); font-weight: 800; }
   /* numero e nome restano insieme: si va a capo solo fra una voce e l'altra */
   #info-servizi .is-voce { white-space: nowrap; }
+
+  /* "Il Municipio X in cifre": cifre del municipio, non dell'area (lo dice il titoletto), con il
+     link alla pagina del municipio sul sito dei conti e la fonte, piccola come "Confini indicativi". */
+  #info-cifre { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  #info-cifre[hidden] { display: none; }
+  #info-cifre .ic-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--amaranto); }
+  #info-cifre .ic-riga { margin: 5px 0 0; font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+  #info-cifre .ic-riga b { color: var(--amaranto); font-weight: 800; }
+  #info-cifre .ic-link {
+    display: inline-block; margin-top: 7px; font-size: 12px; font-weight: 700; color: var(--amaranto);
+    text-decoration: none; transition: color 0.16s var(--ease);
+  }
+  #info-cifre .ic-link:hover { color: var(--amaranto-scuro); text-decoration: underline; }
+  #info-cifre .ic-fonte { margin: 6px 0 0; font-size: 11px; color: var(--muted); line-height: 1.35; }
 
   /* Marker dei servizi: tessere da app con
      l'illustrazione centrata, ancorate alla base: la
@@ -1304,7 +1318,8 @@
     #info-panel h2 { margin: 7px 44px 12px 0; font-size: 20px; }
     #info-panel:not(.scheda-alta) h2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #info-panel:not(.scheda-alta) > dl, #info-panel:not(.scheda-alta) > .share,
-    #info-panel:not(.scheda-alta) > #info-servizi { display: none !important; }
+    #info-panel:not(.scheda-alta) > #info-servizi, #info-panel:not(.scheda-alta) > #info-cifre { display: none !important; }
+    #info-cifre .ic-link { padding: 12px 0; margin-top: 0; font-size: 13px; line-height: 20px; }   /* 44 px al tocco */
     #info-panel:not(.scheda-alta) { cursor: pointer; }
     #info-panel:not(.scheda-alta) button { cursor: pointer; }
     #info-azioni { display: flex; gap: 8px; }
@@ -2090,6 +2105,13 @@
         <div class="is-line" id="info-servizi-line"></div>
         <div id="info-griglia"></div>
       </div>
+      <div id="info-cifre" hidden>
+        <div class="ic-tag" id="info-cifre-tag"></div>
+        <p class="ic-riga" id="info-cifre-spesa"></p>
+        <p class="ic-riga" id="info-cifre-progetti"></p>
+        <a class="ic-link" id="info-cifre-link" href="#" target="_blank" rel="noopener"></a>
+        <p class="ic-fonte" id="info-cifre-fonte"></p>
+      </div>
     </div>
 
     <div id="scheda-servizio" role="dialog" aria-label="Scheda del servizio" aria-hidden="true">
@@ -2197,6 +2219,10 @@
     }) };
   })(/*<<QUARTIERI>>*/);
   var MUNICIPI = /*<<MUNICIPI>>*/;
+  // Il municipio in cifre (data/municipi-in-cifre.json, inlinato dal build): spesa per abitante
+  // e progetti PNRR e Giubileo 2025 di ogni municipio, la fonte e il sito dei conti (nome e
+  // indirizzo da SITO_CONTI in build.py). Nessuna richiesta a quel sito: solo il link.
+  var MUNICIPI_CIFRE = /*<<MUNICIPI_CIFRE>>*/;
   // Hash corto del contenuto di ogni gruppo di file a parte, scritto dal build: i file
   // si chiedono con ?v=<hash> (cache lunga, mai vecchia). rete: null se il build e'
   // uscito senza rete pedonale (niente "A piedi in 15 minuti").
@@ -2906,6 +2932,7 @@
     } else { shareEl.style.display = "none"; }
     aggiornaBloccoVia(props);
     aggiornaServiziScheda(props); // vedi "Servizi nel focus": conteggi per categoria
+    aggiornaCifreMunicipio(props);
     // Su telefono il foglio Servizi prende il posto della scheda: un'area scelta (ricerca,
     // elenco, mappa) lo chiude e torna la scheda.
     if (suMobile() && serviziPanelEl) chiudiFoglioServizi();
@@ -2913,6 +2940,39 @@
     if (serviziPanelEl) posizionaServiziPanel();
   }
   document.getElementById("info-close").addEventListener("click", deseleziona);
+
+  // "Il Municipio X in cifre": le cifre sono del municipio in cui l'area si trova, non dell'area.
+  function aggiornaCifreMunicipio(props) {
+    var box = document.getElementById("info-cifre");
+    var n = String(props.municipio_num_arabo), c = MUNICIPI_CIFRE && MUNICIPI_CIFRE.m[n];
+    if (!c) { box.hidden = true; return; }
+    var it = function (v, d) { return v.toLocaleString("it-IT", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+    var euro = function (v) {
+      return v >= 1e6 ? it(v / 1e6, 1) + " mln €" : v >= 1e3 ? it(Math.round(v / 1e3), 0) + " mila €" : it(Math.round(v), 0) + " €";
+    };
+    var b = function (testo) { var el = document.createElement("b"); el.textContent = testo; return el; };
+    var riga = function (id, parti) {
+      var p = document.getElementById(id); p.textContent = "";
+      parti.forEach(function (x) { p.appendChild(typeof x === "string" ? document.createTextNode(x) : x); });
+      return p;
+    };
+    document.getElementById("info-cifre-tag").textContent = "Il Municipio " + c.r + " in cifre";
+    riga("info-cifre-spesa", ["Spesa del municipio per abitante: ", b(it(Math.round(c.s), 0) + " €"),
+      " nel\u00a02026, " + c.p + "°\u00a0su\u00a015"]).title = "Stanziamenti di spesa 2026 del municipio divisi per i residenti. Posizione fra i 15 municipi: 1° = spesa per abitante più alta.";
+    riga("info-cifre-progetti", c.n
+      ? ["Progetti PNRR e Giubileo 2025 sul territorio: ", b(c.n + (c.n === 1 ? " progetto" : " progetti")), ", ", b(euro(c.e)),
+         c.nn ? " (di cui " + c.nn + " senza importo)" : ""]
+      : ["Progetti PNRR e Giubileo 2025 sul territorio: nessuno collocato solo in questo municipio"]);
+    var link = document.getElementById("info-cifre-link");
+    link.href = MUNICIPI_CIFRE.sito.url + "/municipio/" + n + "/";
+    riga("info-cifre-link", ["Tutti i conti del Municipio " + c.r + " "]).appendChild(document.createElement("span")).textContent = "→";
+    link.lastChild.setAttribute("aria-hidden", "true");
+    link.title = MUNICIPI_CIFRE.sito.nome + ": i conti del Municipio " + c.r + ", in una nuova scheda";
+    var fonte = document.getElementById("info-cifre-fonte");
+    fonte.textContent = MUNICIPI_CIFRE.fonte;
+    fonte.title = MUNICIPI_CIFRE.dettaglio;
+    box.hidden = false;
+  }
 
   // Scheda bassa e alta (telefono): la classe scheda-alta mostra i dettagli. La maniglia e'
   // il pulsante (anche da tastiera); tocco sull'intestazione e trascinamento fanno lo stesso.
