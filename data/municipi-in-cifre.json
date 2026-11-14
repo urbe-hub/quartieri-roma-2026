@@ -1,0 +1,358 @@
+{
+ "titolo": "Il municipio in cifre: spesa stanziata per abitante e progetti PNRR e Giubileo 2025",
+ "nota": "Cifre del municipio, non dell'area: la scheda d'area mostra quelle del municipio in cui l'area si trova. Ricavate con prepara_municipi_in_cifre.py dagli snapshot del sito dei conti dei municipi. fonte_breve e' la forma corta della fonte, per la riga in fondo alla scheda.",
+ "indicatori": {
+  "spesa_per_abitante": {
+   "etichetta": "Spesa del municipio per abitante",
+   "misura": "Stanziamenti di spesa (competenza 2026) che il PEG 2026-2028 assegna alle strutture del municipio, divisi per i residenti al 31/12/2025. Posizione fra i 15 municipi: 1 = valore più alto.",
+   "non_misura": "Non sono pagamenti né impegni. Non comprende la spesa dei dipartimenti centrali, della Polizia Locale e delle società partecipate sul territorio del municipio.",
+   "fonte": "Roma Capitale, PEG 2026-2028, DGC 110/2026; residenti: Roma Capitale, Annuario statistico 2025, Tab. 1.2",
+   "fonte_breve": "PEG 2026-2028",
+   "periodo": "competenza 2026; residenti al 31/12/2025",
+   "data_lettura": "2026-11-13",
+   "licenza": "Documento pubblicato da Roma Capitale. Riuso con citazione della fonte ai sensi dell'art. 7 del D.Lgs. 33/2013 e dell'art. 52, c. 2, del CAD (D.Lgs. 82/2005)."
+  },
+  "progetti_pnrr_giubileo": {
+   "etichetta": "Progetti PNRR e Giubileo 2025 sul territorio del municipio",
+   "misura": "Schede PNRR e Giubileo 2025 collocate in un solo municipio (contato_nel_totale); importo = somma dei fondi del programma assegnati (importo_programma_euro). Le schede senza importo contano nel numero ma non nella somma.",
+   "non_misura": "Non sono pagamenti. Restano fuori i progetti su più municipi, intermunicipali o senza municipio indicato. I progetti sono per lo più gestiti dai dipartimenti di Roma Capitale, non dal municipio.",
+   "fonte": "Roma Capitale, pagine progetti, elenco letto il 13/11/2026",
+   "fonte_breve": "pagine progetti",
+   "periodo": "elenco pubblicato al 13/11/2026",
+   "data_lettura": "2026-11-13",
+   "licenza": "Documento pubblicato da Roma Capitale. Riuso con citazione della fonte ai sensi dell'art. 7 del D.Lgs. 33/2013 e dell'art. 52, c. 2, del CAD (D.Lgs. 82/2005)."
+  }
+ },
+ "municipi": {
+  "1": {
+   "romano": "I",
+   "residenti": 160377,
+   "stanziamenti_spesa_2026_euro": 91523033.82,
+   "spesa_per_abitante_euro": 570.67,
+   "spesa_per_abitante_posizione": 8,
+   "progetti": 100,
+   "progetti_senza_importo": 4,
+   "progetti_importo_euro": 217470626.91,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 73,
+     "progetti_senza_importo": 1,
+     "importo_euro": 138571626.91
+    },
+    "giubileo_2025": {
+     "progetti": 27,
+     "progetti_senza_importo": 3,
+     "importo_euro": 78899000.0
+    }
+   }
+  },
+  "2": {
+   "romano": "II",
+   "residenti": 163806,
+   "stanziamenti_spesa_2026_euro": 94797535.66,
+   "spesa_per_abitante_euro": 578.72,
+   "spesa_per_abitante_posizione": 6,
+   "progetti": 25,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 28621055.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 19,
+     "progetti_senza_importo": 0,
+     "importo_euro": 13341055.0
+    },
+    "giubileo_2025": {
+     "progetti": 6,
+     "progetti_senza_importo": 0,
+     "importo_euro": 15280000.0
+    }
+   }
+  },
+  "3": {
+   "romano": "III",
+   "residenti": 202614,
+   "stanziamenti_spesa_2026_euro": 111369968.54,
+   "spesa_per_abitante_euro": 549.67,
+   "spesa_per_abitante_posizione": 9,
+   "progetti": 4,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 6800000.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 1,
+     "progetti_senza_importo": 0,
+     "importo_euro": 1800000.0
+    },
+    "giubileo_2025": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 5000000.0
+    }
+   }
+  },
+  "4": {
+   "romano": "IV",
+   "residenti": 167978,
+   "stanziamenti_spesa_2026_euro": 118257659.17,
+   "spesa_per_abitante_euro": 704.01,
+   "spesa_per_abitante_posizione": 1,
+   "progetti": 13,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 38625400.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 9,
+     "progetti_senza_importo": 0,
+     "importo_euro": 31425400.0
+    },
+    "giubileo_2025": {
+     "progetti": 4,
+     "progetti_senza_importo": 0,
+     "importo_euro": 7200000.0
+    }
+   }
+  },
+  "5": {
+   "romano": "V",
+   "residenti": 239788,
+   "stanziamenti_spesa_2026_euro": 130687587.08,
+   "spesa_per_abitante_euro": 545.01,
+   "spesa_per_abitante_posizione": 11,
+   "progetti": 5,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 37650000.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 0,
+     "progetti_senza_importo": 0,
+     "importo_euro": 0
+    },
+    "giubileo_2025": {
+     "progetti": 5,
+     "progetti_senza_importo": 0,
+     "importo_euro": 37650000.0
+    }
+   }
+  },
+  "6": {
+   "romano": "VI",
+   "residenti": 243836,
+   "stanziamenti_spesa_2026_euro": 130066923.17,
+   "spesa_per_abitante_euro": 533.42,
+   "spesa_per_abitante_posizione": 13,
+   "progetti": 12,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 36179400.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 7,
+     "progetti_senza_importo": 0,
+     "importo_euro": 26679400.0
+    },
+    "giubileo_2025": {
+     "progetti": 5,
+     "progetti_senza_importo": 0,
+     "importo_euro": 9500000.0
+    }
+   }
+  },
+  "7": {
+   "romano": "VII",
+   "residenti": 314428,
+   "stanziamenti_spesa_2026_euro": 187070393.72,
+   "spesa_per_abitante_euro": 594.95,
+   "spesa_per_abitante_posizione": 5,
+   "progetti": 10,
+   "progetti_senza_importo": 1,
+   "progetti_importo_euro": 7619500.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 5,
+     "progetti_senza_importo": 0,
+     "importo_euro": 2059500.0
+    },
+    "giubileo_2025": {
+     "progetti": 5,
+     "progetti_senza_importo": 1,
+     "importo_euro": 5560000.0
+    }
+   }
+  },
+  "8": {
+   "romano": "VIII",
+   "residenti": 126745,
+   "stanziamenti_spesa_2026_euro": 80082640.88,
+   "spesa_per_abitante_euro": 631.84,
+   "spesa_per_abitante_posizione": 2,
+   "progetti": 14,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 25349500.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 9,
+     "progetti_senza_importo": 0,
+     "importo_euro": 20801000.0
+    },
+    "giubileo_2025": {
+     "progetti": 5,
+     "progetti_senza_importo": 0,
+     "importo_euro": 4548500.0
+    }
+   }
+  },
+  "9": {
+   "romano": "IX",
+   "residenti": 183840,
+   "stanziamenti_spesa_2026_euro": 100707168.01,
+   "spesa_per_abitante_euro": 547.8,
+   "spesa_per_abitante_posizione": 10,
+   "progetti": 10,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 30795000.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 7,
+     "progetti_senza_importo": 0,
+     "importo_euro": 25795000.0
+    },
+    "giubileo_2025": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 5000000.0
+    }
+   }
+  },
+  "10": {
+   "romano": "X",
+   "residenti": 227271,
+   "stanziamenti_spesa_2026_euro": 121367819.66,
+   "spesa_per_abitante_euro": 534.02,
+   "spesa_per_abitante_posizione": 12,
+   "progetti": 11,
+   "progetti_senza_importo": 1,
+   "progetti_importo_euro": 35807006.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 4,
+     "progetti_senza_importo": 0,
+     "importo_euro": 7307006.0
+    },
+    "giubileo_2025": {
+     "progetti": 7,
+     "progetti_senza_importo": 1,
+     "importo_euro": 28500000.0
+    }
+   }
+  },
+  "11": {
+   "romano": "XI",
+   "residenti": 150997,
+   "stanziamenti_spesa_2026_euro": 74228413.58,
+   "spesa_per_abitante_euro": 491.59,
+   "spesa_per_abitante_posizione": 14,
+   "progetti": 6,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 57738409.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 52738409.0
+    },
+    "giubileo_2025": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 5000000.0
+    }
+   }
+  },
+  "12": {
+   "romano": "XII",
+   "residenti": 139835,
+   "stanziamenti_spesa_2026_euro": 84031987.15,
+   "spesa_per_abitante_euro": 600.94,
+   "spesa_per_abitante_posizione": 4,
+   "progetti": 14,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 19645000.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 10,
+     "progetti_senza_importo": 0,
+     "importo_euro": 11145000.0
+    },
+    "giubileo_2025": {
+     "progetti": 4,
+     "progetti_senza_importo": 0,
+     "importo_euro": 8500000.0
+    }
+   }
+  },
+  "13": {
+   "romano": "XIII",
+   "residenti": 130244,
+   "stanziamenti_spesa_2026_euro": 78696109.35,
+   "spesa_per_abitante_euro": 604.22,
+   "spesa_per_abitante_posizione": 3,
+   "progetti": 7,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 13696530.56,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 5496530.56
+    },
+    "giubileo_2025": {
+     "progetti": 4,
+     "progetti_senza_importo": 0,
+     "importo_euro": 8200000.0
+    }
+   }
+  },
+  "14": {
+   "romano": "XIV",
+   "residenti": 190701,
+   "stanziamenti_spesa_2026_euro": 91891079.46,
+   "spesa_per_abitante_euro": 481.86,
+   "spesa_per_abitante_posizione": 15,
+   "progetti": 9,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 71459416.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 6,
+     "progetti_senza_importo": 0,
+     "importo_euro": 66166416.0
+    },
+    "giubileo_2025": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 5293000.0
+    }
+   }
+  },
+  "15": {
+   "romano": "XV",
+   "residenti": 161218,
+   "stanziamenti_spesa_2026_euro": 93239975.82,
+   "spesa_per_abitante_euro": 578.35,
+   "spesa_per_abitante_posizione": 7,
+   "progetti": 8,
+   "progetti_senza_importo": 0,
+   "progetti_importo_euro": 24746400.0,
+   "per_programma": {
+    "pnrr": {
+     "progetti": 3,
+     "progetti_senza_importo": 0,
+     "importo_euro": 16746400.0
+    },
+    "giubileo_2025": {
+     "progetti": 5,
+     "progetti_senza_importo": 0,
+     "importo_euro": 8000000.0
+    }
+   }
+  }
+ }
+}

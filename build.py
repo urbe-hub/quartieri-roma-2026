@@ -30,6 +30,9 @@ Consuma SOLO input dentro questa cartella:
                                              esagono abitato, prima vista della 2D:
                                              prepara_copertura_15_minuti.py; copiato
                                              accanto al bundle; senza, niente strato)
+  - data/municipi-in-cifre.json             (due cifre per municipio nella scheda d'area:
+                                             spesa per abitante e progetti PNRR e Giubileo
+                                             2025, da prepara_municipi_in_cifre.py; inlinato)
   - icone/*.svg                             (icone dei servizi, tessere da app con
                                              l'illustrazione centrata: inlinate nel bundle,
                                              una per categoria, vedi CATEGORIA_ICONA; si
@@ -138,6 +141,13 @@ MARKER_URBE_LOGO = "<<URBE_LOGO>>"
 MARKER_ICONE_SERVIZI = "/*<<ICONE_SERVIZI>>*/"
 MARKER_VERSIONI = "/*<<VERSIONI>>*/"
 MARKER_INTRO_SVG = "<<INTRO_SVG>>"
+MARKER_MUNICIPI_CIFRE = "/*<<MUNICIPI_CIFRE>>*/"
+
+# Il municipio in cifre nella scheda d'area: due cifre del municipio (non dell'area) e il link
+# alla sua pagina sul sito dei conti dei municipi. Nome e indirizzo del sito stanno solo qui.
+# La mappa non scarica niente da quel sito: le cifre sono inlinate, resta solo il link.
+SITO_CONTI = {"nome": "Roma in chiaro", "url": "https://roma-in-chiaro.vercel.app"}
+MUNICIPI_CIFRE_PATH = SCRIPT_DIR / "data" / "municipi-in-cifre.json"
 
 # ---------- Statistiche anonime (Umami, sul nostro server) ----------
 # Si accendono solo con l'ID del sito: senza, nel bundle non entra nessuno script di
@@ -672,6 +682,52 @@ def costruisci_icone_servizi():
 _RE_CODICE_MIM = re.compile(r"^[A-Za-z0-9]{6,12}$")
 
 
+def data_it(iso):
+    a, m, g = iso.split("-")
+    if not (len(a) == 4 and len(m) == 2 and len(g) == 2 and (a + m + g).isdigit()):
+        raise ValueError("data non valida: " + iso)
+    return g + "/" + m + "/" + a
+
+
+def costruisci_municipi_cifre(path=MUNICIPI_CIFRE_PATH):
+    # Dal file di prepara_municipi_in_cifre.py tiene solo quello che la scheda mostra:
+    # per municipio la spesa per abitante e la sua posizione fra i 15, il numero dei progetti,
+    # quanti senza importo e la somma; poi la riga della fonte e il link al sito dei conti.
+    try:
+        d = json.loads(leggi_input_obbligatorio(path))
+        spesa = d["indicatori"]["spesa_per_abitante"]
+        prog = d["indicatori"]["progetti_pnrr_giubileo"]
+        if sorted(d["municipi"], key=int) != [str(n) for n in range(1, 16)]:
+            raise ValueError("servono i municipi da 1 a 15")
+        m = {}
+        for n in range(1, 16):
+            r = d["municipi"][str(n)]
+            s, pos, num, senza, imp = (r["spesa_per_abitante_euro"], r["spesa_per_abitante_posizione"],
+                                       r["progetti"], r["progetti_senza_importo"], r["progetti_importo_euro"])
+            if not (isinstance(s, (int, float)) and s > 0 and isinstance(pos, int) and 1 <= pos <= 15
+                    and isinstance(num, int) and isinstance(senza, int) and 0 <= senza <= num
+                    and isinstance(imp, (int, float)) and imp >= 0 and isinstance(r["romano"], str)):
+                raise ValueError("cifre non valide per il municipio " + str(n))
+            m[str(n)] = {"r": r["romano"], "s": s, "p": pos, "n": num, "nn": senza, "e": imp}
+        if sorted(x["p"] for x in m.values()) != list(range(1, 16)):
+            raise ValueError("le posizioni della spesa per abitante non vanno da 1 a 15")
+        letto_s, letto_p = data_it(spesa["data_lettura"]), data_it(prog["data_lettura"])
+        if letto_s == letto_p:
+            riga = spesa["fonte_breve"] + " e " + prog["fonte_breve"] + ", lette il " + letto_s
+        else:
+            riga = spesa["fonte_breve"] + " (letto il " + letto_s + ") e " + prog["fonte_breve"] + " (lette il " + letto_p + ")"
+        dettaglio = ("Spesa per abitante: " + spesa["fonte"] + "; " + spesa["periodo"] + ". "
+                     "Progetti: " + prog["fonte"] + ". " + prog["non_misura"])
+    except (KeyError, TypeError, ValueError, AttributeError, json.JSONDecodeError) as exc:
+        raise SystemExit("Errore: " + str(path) + " non valido (" + str(exc) + ").")
+    return {
+        "sito": dict(SITO_CONTI),
+        "fonte": "Fonte: Roma Capitale, " + riga,
+        "dettaglio": dettaglio,
+        "m": m,
+    }
+
+
 def info_servizio_valida(info, riga):
     def errore(perche):
         raise SystemExit("Errore: info non valida (" + perche + ") in servizi.json: " + str(riga)[:120])
@@ -930,6 +986,8 @@ def main(argv=None):
 
     urbe_logo = data_uri_png(URBE_LOGO_PATH)
     icone_servizi = costruisci_icone_servizi()
+    municipi_cifre = costruisci_municipi_cifre()
+    print("Il municipio in cifre: 15 municipi, link a " + SITO_CONTI["url"] + ".")
     print("Icone servizi: " + str(len(icone_servizi)) + " categorie inlinate.")
 
     # Prima i dati a parte (gate compreso), poi il bundle: index.html porta l'hash di
@@ -948,7 +1006,7 @@ def main(argv=None):
     copia_licenze_e_og()
 
     for marker in (MARKER_FONTS_CSS, MARKER_LEAFLET_CSS, MARKER_LEAFLET_JS, MARKER_QUARTIERI,
-                   MARKER_MUNICIPI, MARKER_URBE_LOGO, MARKER_ICONE_SERVIZI, MARKER_VERSIONI,
+                   MARKER_MUNICIPI, MARKER_MUNICIPI_CIFRE, MARKER_URBE_LOGO, MARKER_ICONE_SERVIZI, MARKER_VERSIONI,
                    MARKER_VISTA3D_CSS, MARKER_VISTA3D_JS, MARKER_INTRO_SVG, MARKER_STATISTICHE_TAG,
                    MARKER_STATISTICHE_LINK, MARKER_STATISTICHE_LINK_FINE, MARKER_STATISTICHE_URL):
         occorrenze = template.count(marker)
@@ -967,6 +1025,7 @@ def main(argv=None):
     output = output.replace(MARKER_LEAFLET_JS, escava_chiusura_script(leaflet_js))
     output = output.replace(MARKER_QUARTIERI, dump_json_sicuro(compatta_feature_collection(quartieri_geojson)))
     output = output.replace(MARKER_MUNICIPI, dump_json_sicuro(municipi_geojson))
+    output = output.replace(MARKER_MUNICIPI_CIFRE, dump_json_sicuro(municipi_cifre))
     output = output.replace(MARKER_URBE_LOGO, urbe_logo)
     output = output.replace(MARKER_INTRO_SVG, costruisci_intro_svg(municipi_geojson))
     output = output.replace(MARKER_ICONE_SERVIZI, dump_json_sicuro(icone_servizi))

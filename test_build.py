@@ -366,3 +366,59 @@ def test_template_ha_i_punti_dell_intro():
     # la scritta e' una sola, il cartello: niente parametri di prova ne' varianti
     for avanzo in ("ritmo", "?titolo", "intro-t-", "intro-lt"):
         assert avanzo not in t, avanzo
+
+
+# ---------- Il municipio in cifre ----------
+
+def test_municipi_cifre_dal_file_del_repository():
+    d = build.costruisci_municipi_cifre()
+    assert sorted(d["m"], key=int) == [str(n) for n in range(1, 16)]
+    assert sorted(r["p"] for r in d["m"].values()) == list(range(1, 16))
+    # Municipio I: 91.523.033,82 euro stanziati / 160.377 residenti, come sul sito dei conti
+    assert d["m"]["1"]["s"] == pytest.approx(570.67, abs=0.01)
+    for r in d["m"].values():
+        assert 0 <= r["nn"] <= r["n"] and r["e"] >= 0
+    assert d["sito"] == build.SITO_CONTI
+    assert d["fonte"].startswith("Fonte: Roma Capitale, ") and "/2026" in d["fonte"]
+
+
+def test_municipi_cifre_ogni_cifra_ha_fonte_periodo_e_data():
+    d = json.loads(build.MUNICIPI_CIFRE_PATH.read_text(encoding="utf-8"))
+    for ind in d["indicatori"].values():
+        for campo in ("fonte", "fonte_breve", "periodo", "data_lettura", "licenza"):
+            assert ind[campo], campo
+        build.data_it(ind["data_lettura"])
+
+
+def test_municipi_cifre_non_valide(tmp_path):
+    d = json.loads(build.MUNICIPI_CIFRE_PATH.read_text(encoding="utf-8"))
+    del d["municipi"]["15"]
+    f = tmp_path / "cifre.json"
+    f.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        build.costruisci_municipi_cifre(f)
+    d = json.loads(build.MUNICIPI_CIFRE_PATH.read_text(encoding="utf-8"))
+    d["municipi"]["3"]["progetti_senza_importo"] = d["municipi"]["3"]["progetti"] + 1
+    f.write_text(json.dumps(d), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        build.costruisci_municipi_cifre(f)
+
+
+def test_municipi_cifre_nome_e_indirizzo_del_sito_in_un_punto_solo():
+    # Il template non conosce il sito: lo riceve dal build. Nessuna richiesta, solo il link.
+    t = _template()
+    host = build.SITO_CONTI["url"].split("//", 1)[1]
+    assert host not in t.lower() and build.SITO_CONTI["nome"] not in t
+    assert (BASE / "build.py").read_text(encoding="utf-8").count(host) == 1
+    assert build.SITO_CONTI["url"].startswith("https://") and not build.SITO_CONTI["url"].endswith("/")
+    assert '<a class="ic-link" id="info-cifre-link" href="#" target="_blank" rel="noopener">' in t
+    assert 'MUNICIPI_CIFRE.sito.url + "/municipio/" + n + "/"' in t
+
+
+def test_municipi_cifre_testo_senza_lineette():
+    t = _template()
+    blocco = t[t.index("function aggiornaCifreMunicipio"):]
+    blocco = blocco[:blocco.index("\n  }\n")]
+    d = build.costruisci_municipi_cifre()
+    for testo in (blocco, d["fonte"], d["dettaglio"]):
+        assert "—" not in testo and "–" not in testo

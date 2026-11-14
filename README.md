@@ -13,6 +13,7 @@ Nella prossima versione:
 - una nuova famiglia di servizi, Trasporti: 73 stazioni della metro, 105 fermate del tram (le fermate omonime vicine sono un punto solo) e 73 stazioni dei treni (FL1-FL8, Leonardo Express, Metromare, Roma-Viterbo), con le linee nella scheda
 - i 15 minuti anche in bici: un interruttore A piedi | In bici nel pannello, a circa 15 km/h sulla rete stradale, con i sensi unici, i sampietrini e le aree pedonali
 - le piste ciclabili sulla mappa 2D (circa 295 km di piste separate e 27 km di corsie sulla strada nel Comune di Roma, da OpenStreetMap), dalla legenda o dal pannello dei 15 minuti in bici
+- nella scheda d'area, "Il Municipio X in cifre": la spesa del municipio per abitante nel 2026 (con la posizione fra i 15) e i progetti PNRR e Giubileo 2025 sul suo territorio, con il link "Tutti i conti del Municipio X" a Roma in chiaro, il sito dei conti dei municipi (vedi "Il municipio in cifre")
 
 Con la versione del 2 novembre 2026:
 
@@ -177,7 +178,7 @@ Nella fonte GeoRoma sette nomi di quartiere usano l'apostrofo al posto dell'acce
 
 ## Fonti e licenze
 
-Il codice è sotto licenza MIT (vedi `LICENSE`). I dati, le librerie e i font hanno ciascuno la propria licenza, elencata in `THIRD_PARTY.md`: GeoRoma di Roma Capitale, OpenStreetMap (ODbL), Ministero dell'Istruzione e del Merito (IODL 2.0), Ministero della Salute (IODL 2.0), AGENAS, Regione Lazio, GHS-POP della Commissione europea (CC BY 4.0), Leaflet, MapLibre GL, il font Montserrat e lo script delle statistiche (Umami). Il nome e il logo di Urbe Hub, anche nell'immagine per i social, non sono coperti dalla licenza MIT.
+Il codice è sotto licenza MIT (vedi `LICENSE`). I dati, le librerie e i font hanno ciascuno la propria licenza, elencata in `THIRD_PARTY.md`: GeoRoma di Roma Capitale, PEG 2026-2028, Annuario statistico e pagine progetti di Roma Capitale, OpenStreetMap (ODbL), Ministero dell'Istruzione e del Merito (IODL 2.0), Ministero della Salute (IODL 2.0), AGENAS, Regione Lazio, GHS-POP della Commissione europea (CC BY 4.0), Leaflet, MapLibre GL, il font Montserrat e lo script delle statistiche (Umami). Il nome e il logo di Urbe Hub, anche nell'immagine per i social, non sono coperti dalla licenza MIT.
 
 ## Mappa di base
 
@@ -195,6 +196,15 @@ Sotto i 720 px di larghezza la mappa cambia cornice, e il desktop resta com'è:
 - ogni foglio ha una maniglia: un tocco lo alza o lo abbassa, trascinarlo in giù lo abbassa di un gradino
 
 La stessa cornice vale in 3D.
+
+## Il municipio in cifre
+
+In fondo alla scheda d'area, sotto "Il Municipio X in cifre", ci sono due cifre del municipio in cui l'area si trova. Sono del municipio, non dell'area:
+
+- la spesa del municipio per abitante: gli stanziamenti di spesa (competenza 2026) che il PEG 2026-2028 di Roma Capitale (Allegato A, DGC 110/2026) assegna alle strutture del municipio, divisi per i residenti al 31/12/2025 (Annuario statistico 2025, Tab. 1.2), con la posizione fra i 15 municipi (1° = valore più alto). Non sono pagamenti e non comprendono la spesa dei dipartimenti centrali sul territorio;
+- i progetti PNRR e Giubileo 2025 collocati in un solo municipio, dalle pagine progetti di Roma Capitale: il numero e la somma dei fondi del programma assegnati (non pagamenti). Un progetto senza importo conta nel numero ma non nella somma, e la scheda lo dice ("di cui N senza importo"). Restano fuori i progetti su più municipi o su tutta la città.
+
+Le cifre stanno in `data/municipi-in-cifre.json` e il build le inlina nel bundle: la mappa non chiede niente ad altri siti. Le scrive `prepara_municipi_in_cifre.py <cartella data/snapshot>` (o con la variabile `MAPPA_CONTI_SNAPSHOT`) dagli snapshot di Roma in chiaro, il sito dei conti dei municipi, con le sue stesse regole, così la scheda e il sito dicono lo stesso. Il link "Tutti i conti del Municipio X →" apre la pagina del municipio su quel sito in una nuova scheda. Nome e indirizzo del sito stanno in un solo punto, `SITO_CONTI` in `build.py`.
 
 ## La scheda del servizio
 
@@ -223,6 +233,7 @@ prepara_rete_pedonale.py         rete pedonale da OpenStreetMap
 prepara_rete_bici.py             rete per la bici e piste ciclabili da OpenStreetMap
 prepara_trasporti.py             stazioni della metro, fermate del tram e stazioni dei treni da OpenStreetMap
 prepara_copertura_15_minuti.py   copertura dei 15 minuti a esagoni (spenta in questo rilascio)
+prepara_municipi_in_cifre.py     spesa per abitante e progetti PNRR e Giubileo 2025 per municipio
 ```
 
 ## Contatti
